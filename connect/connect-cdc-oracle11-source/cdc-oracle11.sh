@@ -57,7 +57,7 @@ curl -X PUT \
                "transforms": "TimestampConverter",
                "transforms.TimestampConverter.type": "org.apache.kafka.connect.transforms.TimestampConverter$Value",
                "transforms.TimestampConverter.format": "yyyy-MM-dd",
-               "transforms.TimestampConverter.field": "start_date",
+               "transforms.TimestampConverter.field": "START_DATE",
                "transforms.TimestampConverter.target.type": "string",
                "redo.log.row.fetch.size":1
           }' \
