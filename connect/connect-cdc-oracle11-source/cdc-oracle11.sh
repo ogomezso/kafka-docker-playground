@@ -54,6 +54,11 @@ curl -X PUT \
                "table.topic.name.template": "${databaseName}.${schemaName}.${tableName}",
                "numeric.mapping": "best_fit",
                "connection.pool.max.size": 20,
+               "transforms": "TimestampConverter",
+               "transforms.TimestampConverter.type": "org.apache.kafka.connect.transforms.TimestampConverter$Value",
+               "transforms.TimestampConverter.format": "yyyy-MM-dd",
+               "transforms.TimestampConverter.field": "start_date",
+               "transforms.TimestampConverter.target.type": "string",
                "redo.log.row.fetch.size":1
           }' \
      http://localhost:8083/connectors/cdc-oracle11-source/config | jq .

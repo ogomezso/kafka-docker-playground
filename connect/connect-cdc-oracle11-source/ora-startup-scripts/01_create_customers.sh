@@ -11,7 +11,8 @@ create table CUSTOMERS (
         club_status VARCHAR(20),
         comments VARCHAR(90),
         create_ts timestamp DEFAULT CURRENT_TIMESTAMP,
-        update_ts timestamp
+        update_ts timestamp,
+        start_date DATE NOT NULL
 );
 
 ALTER TABLE CUSTOMERS ADD (
