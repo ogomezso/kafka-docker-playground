@@ -24,7 +24,6 @@ if [[ "$CUR_WAIT" -gt "$MAX_WAIT" ]]; then
 fi
 done
 log "Oracle DB has started!"
-sleep 60
 
 # Create a redo-log-topic. Please make sure you create a topic with the same name you will use for "redo.log.topic.name": "redo-log-topic"
 # CC-13104
@@ -66,79 +65,238 @@ curl -X PUT \
 log "Waiting 60s for connector to read existing data"
 sleep 60
 
-log "Running SQL scripts"
-for script in ${DIR}/sample-sql-scripts/*.sh
-do
-     $script "ORCLCDB"
-done
+log "Insert a record"
+docker exec -i oracle sqlplus C\#\#MYUSER/mypassword@//localhost:1521/ORCLCDB << EOF
+Insert into CUSTOMERS (GRGR_CK,CICI_ID,GRGR_ID,PAGR_CK,GRGR_NAME,GRGR_ADDR1,GRGR_ADDR2,GRGR_ADDR3,GRGR_CITY,GRGR_STATE,GRGR_ZIP,GRGR_COUNTY,GRGR_CTRY_CD,GRGR_PHONE,GRGR_PHONE_EXT,GRGR_FAX,GRGR_FAX_EXT,GRGR_EMAIL,GRGR_MCTR_TYPE,GRGR_MCTR_VIP,MCAR_AREA_ID,CSCS_ID,GRGR_STS,GRGR_ORIG_EFF_DT,GRGR_TERM_DT,GRGR_MCTR_TRSN,EXCD_ID,GRGR_RNST_DT,GRGR_CONV_DT,GRGR_RENEW_MMDD,GRGR_PREV_ANNV_DT,GRGR_CURR_ANNV_DT,GRGR_NEXT_ANNV_DT,GRGR_MCTR_PTYP,GRGR_UNDW_USUS_ID,GRGR_CAP_IND,GRGR_LAST_CAP_DT,GRGR_CAP_BAT_STS,GRGR_BILL_LEVEL,GRGR_LMT_ADJ_MOS,GRGR_BL_CONV_DT,GRGR_NAME_XLOW,GRGR_CITY_XLOW,GRGR_MCTR_LANG,GRGR_EXTN_ADDR_IND,WMDS_SEQ_NO,GRGR_TOTAL_EMPL,GRGR_TOTAL_ELIG,GRGR_TOTAL_CONTR,GRGR_POL_NO,CRCY_ID,GRGR_EIN,GRGR_ERIS_MMDD,GRGR_RECD_DT,GRGR_DEN_CHT_IND,GRGR_CAP_CONV_DT,GRGR_RUNOUT_DT,GRGR_RUNOUT_EXCD,GRGR_TRANS_ACCEPT,GRGR_ITS_CODE,GRGR_AUTONUM_IND,GRGR_CONT_EFF_DT,GRGR_TERM_PREM_MOS,GRGR_RNST_TYPE,GRGR_RNST_VAL,GRGR_LOCK_TOKEN,ATXR_SOURCE_ID,SYS_LAST_UPD_DTM,SYS_USUS_ID,SYS_DBUSER_ID,SYS_BITMAP_NVL,SYS_LAST_OFFSET_NVL,GRGR_PUP_IND_NVL) values (7013,'01','20001777',0,'FAYDA ZAKARIA MD PC HMO','1711 MONROE ST',' ',' ','Dearborn','MI','48124','Wayne','USA','3135629100',' ',' ',' ',' ','None','None',' ',' ','AC',to_timestamp('2019-02-01 00:00:00.000000000','YYYY-MM-DD HH24:MI:SS.FF'),to_timestamp('9999-12-31 00:00:00.000000000','YYYY-MM-DD HH24:MI:SS.FF'),' ',' ',to_timestamp('1753-01-01 00:00:00.000000000','YYYY-MM-DD HH24:MI:SS.FF'),to_timestamp('1753-01-01 00:00:00.000000000','YYYY-MM-DD HH24:MI:SS.FF'),201,to_timestamp('9999-12-31 00:00:00.000000000','YYYY-MM-DD HH24:MI:SS.FF'),to_timestamp('9999-12-31 00:00:00.000000000','YYYY-MM-DD HH24:MI:SS.FF'),to_timestamp('9999-12-31 00:00:00.000000000','YYYY-MM-DD HH24:MI:SS.FF'),' ',' ','Y',to_timestamp('1753-01-01 00:00:00.000000000','YYYY-MM-DD HH24:MI:SS.FF'),0,'S',12,to_timestamp('1753-01-01 00:00:00.000000000','YYYY-MM-DD HH24:MI:SS.FF'),'fayda za','dearborn','None',' ',0,0,0,0,' ',' ',' ',201,to_timestamp('1753-01-01 00:00:00.000000000','YYYY-MM-DD HH24:MI:SS.FF'),'N',to_timestamp('1753-01-01 00:00:00.000000000','YYYY-MM-DD HH24:MI:SS.FF'),to_timestamp('9999-12-31 00:00:00.000000000','YYYY-MM-DD HH24:MI:SS.FF'),' ',' ',' ','Y',to_timestamp('1753-01-01 00:00:00.000000000','YYYY-MM-DD HH24:MI:SS.FF'),0,'N',0,1,to_timestamp('3423-01-01 00:44:56.680000000','YYYY-MM-DD HH24:MI:SS.FF'),to_timestamp('2020-09-26 09:48:17.000000000','YYYY-MM-DD HH24:MI:SS.FF'),'FACETS','FACETS',null,null,'N');
+  exit;
+EOF
 
 log "Waiting 60s for connector to read new data"
 sleep 60
 
-log "Verifying topic ORCLCDB.C__MYUSER.CUSTOMERS: there should be 13 records"
+log "Verifying topic ORCLCDB.C__MYUSER.CUSTOMERS: there should be 1 records"
 set +e
-timeout 60 docker exec connect kafka-avro-console-consumer -bootstrap-server broker:9092 --property schema.registry.url=http://schema-registry:8081 --topic ORCLCDB.C__MYUSER.CUSTOMERS --from-beginning --max-messages 13 > /tmp/result.log  2>&1
+timeout 60 docker exec connect kafka-avro-console-consumer -bootstrap-server broker:9092 --property schema.registry.url=http://schema-registry:8081 --topic ORCLCDB.C__MYUSER.CUSTOMERS --from-beginning --max-messages 1 > /tmp/result.log  2>&1
 set -e
 cat /tmp/result.log
-log "Check there is 5 snapshots events"
-if [ $(grep -c "op_type\":{\"string\":\"R\"}" /tmp/result.log) -ne 5 ]
-then
-     logerror "Did not get expected results"
-     exit 1
-fi
-log "Check there is 3 insert events"
-if [ $(grep -c "op_type\":{\"string\":\"I\"}" /tmp/result.log) -ne 3 ]
-then
-     logerror "Did not get expected results"
-     exit 1
-fi
-log "Check there is 4 update events"
-if [ $(grep -c "op_type\":{\"string\":\"U\"}" /tmp/result.log) -ne 4 ]
-then
-     logerror "Did not get expected results"
-     exit 1
-fi
-log "Check there is 1 delete events"
-if [ $(grep -c "op_type\":{\"string\":\"D\"}" /tmp/result.log) -ne 1 ]
-then
-     logerror "Did not get expected results"
-     exit 1
-fi
 
-log "Verifying topic redo-log-topic: there should be 9 records"
-timeout 60 docker exec connect kafka-avro-console-consumer -bootstrap-server broker:9092 --property schema.registry.url=http://schema-registry:8081 --topic redo-log-topic --from-beginning --max-messages 9
+log "Verifying topic redo-log-topic: there should be 1 records"
+timeout 60 docker exec connect kafka-avro-console-consumer -bootstrap-server broker:9092 --property schema.registry.url=http://schema-registry:8081 --topic redo-log-topic --from-beginning --max-messages 1
 
-log "🚚 If you're planning to inject more data, have a look at https://github.com/vdesabou/kafka-docker-playground/blob/master/connect/connect-cdc-oracle19-source/README.md#note-on-redologrowfetchsize"
+# results with 1.4.0
+
+# {
+#     "ATXR_SOURCE_ID": 45852223496680,
+#     "CICI_ID": "01",
+#     "CRCY_ID": " ",
+#     "CSCS_ID": " ",
+#     "EXCD_ID": " ",
+#     "GRGR_ADDR1": "1711 MONROE ST",
+#     "GRGR_ADDR2": " ",
+#     "GRGR_ADDR3": " ",
+#     "GRGR_AUTONUM_IND": "Y",
+#     "GRGR_BILL_LEVEL": "S",
+#     "GRGR_BL_CONV_DT": -6847804800000,
+#     "GRGR_CAP_BAT_STS": 0,
+#     "GRGR_CAP_CONV_DT": -6847804800000,
+#     "GRGR_CAP_IND": "Y",
+#     "GRGR_CITY": "Dearborn",
+#     "GRGR_CITY_XLOW": "dearborn",
+#     "GRGR_CK": 7013,
+#     "GRGR_CONT_EFF_DT": -6847804800000,
+#     "GRGR_CONV_DT": -6847804800000,
+#     "GRGR_COUNTY": "Wayne",
+#     "GRGR_CTRY_CD": "USA",
+#     "GRGR_CURR_ANNV_DT": 253402214400000,
+#     "GRGR_DEN_CHT_IND": "N",
+#     "GRGR_EIN": " ",
+#     "GRGR_EMAIL": " ",
+#     "GRGR_ERIS_MMDD": 201,
+#     "GRGR_EXTN_ADDR_IND": " ",
+#     "GRGR_FAX": " ",
+#     "GRGR_FAX_EXT": " ",
+#     "GRGR_ID": "20001777",
+#     "GRGR_ITS_CODE": " ",
+#     "GRGR_LAST_CAP_DT": -6847804800000,
+#     "GRGR_LMT_ADJ_MOS": 12,
+#     "GRGR_LOCK_TOKEN": 1,
+#     "GRGR_MCTR_LANG": "None",
+#     "GRGR_MCTR_PTYP": " ",
+#     "GRGR_MCTR_TRSN": " ",
+#     "GRGR_MCTR_TYPE": "None",
+#     "GRGR_MCTR_VIP": "None",
+#     "GRGR_NAME": "FAYDA ZAKARIA MD PC HMO",
+#     "GRGR_NAME_XLOW": "fayda za",
+#     "GRGR_NEXT_ANNV_DT": 253402214400000,
+#     "GRGR_ORIG_EFF_DT": 1548979200000,
+#     "GRGR_PHONE": "3135629100",
+#     "GRGR_PHONE_EXT": " ",
+#     "GRGR_POL_NO": " ",
+#     "GRGR_PREV_ANNV_DT": 253402214400000,
+#     "GRGR_PUP_IND_NVL": "N",
+#     "GRGR_RECD_DT": -6847804800000,
+#     "GRGR_RENEW_MMDD": 201,
+#     "GRGR_RNST_DT": -6847804800000,
+#     "GRGR_RNST_TYPE": "N",
+#     "GRGR_RNST_VAL": 0,
+#     "GRGR_RUNOUT_DT": 253402214400000,
+#     "GRGR_RUNOUT_EXCD": " ",
+#     "GRGR_STATE": "MI",
+#     "GRGR_STS": "AC",
+#     "GRGR_TERM_DT": 253402214400000,
+#     "GRGR_TERM_PREM_MOS": 0,
+#     "GRGR_TOTAL_CONTR": 0,
+#     "GRGR_TOTAL_ELIG": 0,
+#     "GRGR_TOTAL_EMPL": 0,
+#     "GRGR_TRANS_ACCEPT": " ",
+#     "GRGR_UNDW_USUS_ID": " ",
+#     "GRGR_ZIP": "48124",
+#     "MCAR_AREA_ID": " ",
+#     "PAGR_CK": 0,
+#     "SYS_BITMAP_NVL": null,
+#     "SYS_DBUSER_ID": {
+#         "string": "FACETS"
+#     },
+#     "SYS_LAST_OFFSET_NVL": null,
+#     "SYS_LAST_UPD_DTM": {
+#         "long": 1601113697000
+#     },
+#     "SYS_USUS_ID": {
+#         "string": "FACETS"
+#     },
+#     "WMDS_SEQ_NO": 0,
+#     "current_ts": {
+#         "string": "1638805826756"
+#     },
+#     "op_ts": {
+#         "string": "1638805822000"
+#     },
+#     "op_type": {
+#         "string": "I"
+#     },
+#     "row_id": {
+#         "string": "AAAR32AAHAAAAFbAAA"
+#     },
+#     "scn": {
+#         "string": "2163159"
+#     },
+#     "table": {
+#         "string": "ORCLCDB.C##MYUSER.CUSTOMERS"
+#     },
+#     "username": {
+#         "string": "C##MYUSER"
+#     }
+# }
 
 
+# REDO
 
-# 13:40:45 ℹ️ Verifying topic ORCLCDB.C__MYUSER.CUSTOMERS: there should be 13 records
-# {"ID":1,"FIRST_NAME":{"string":"Rica"},"LAST_NAME":{"string":"Blaisdell"},"EMAIL":{"string":"rblaisdell0@rambler.ru"},"GENDER":{"string":"Female"},"CLUB_STATUS":{"string":" "},"COMMENTS":{"string":"Universal optimal hierarchy"},"CREATE_TS":{"long":1638797832137},"UPDATE_TS":{"long":1638797832000},"MY_TIMESTAMP":{"long":-6847804800000},"table":{"string":"ORCLCDB.C##MYUSER.CUSTOMERS"},"scn":{"string":"2159058"},"op_type":{"string":"R"},"op_ts":null,"current_ts":{"string":"1638797921085"},"row_id":null,"username":null}
-# {"ID":2,"FIRST_NAME":{"string":"Ruthie"},"LAST_NAME":{"string":"Brockherst"},"EMAIL":{"string":"rbrockherst1@ow.ly"},"GENDER":{"string":"Female"},"CLUB_STATUS":{"string":" "},"COMMENTS":{"string":"Reverse-engineered tangible interface"},"CREATE_TS":{"long":1638797832140},"UPDATE_TS":{"long":1638797832000},"MY_TIMESTAMP":{"long":-6847804800000},"table":{"string":"ORCLCDB.C##MYUSER.CUSTOMERS"},"scn":{"string":"2159058"},"op_type":{"string":"R"},"op_ts":null,"current_ts":{"string":"1638797921090"},"row_id":null,"username":null}
-# {"ID":3,"FIRST_NAME":{"string":"Mariejeanne"},"LAST_NAME":{"string":"Cocci"},"EMAIL":{"string":"mcocci2@techcrunch.com"},"GENDER":{"string":"Female"},"CLUB_STATUS":{"string":" "},"COMMENTS":{"string":"Multi-tiered bandwidth-monitored capability"},"CREATE_TS":{"long":1638797832141},"UPDATE_TS":{"long":1638797832000},"MY_TIMESTAMP":{"long":-6847804800000},"table":{"string":"ORCLCDB.C##MYUSER.CUSTOMERS"},"scn":{"string":"2159058"},"op_type":{"string":"R"},"op_ts":null,"current_ts":{"string":"1638797921090"},"row_id":null,"username":null}
-# {"ID":4,"FIRST_NAME":{"string":"Hashim"},"LAST_NAME":{"string":"Rumke"},"EMAIL":{"string":"hrumke3@sohu.com"},"GENDER":{"string":"Male"},"CLUB_STATUS":{"string":" "},"COMMENTS":{"string":"Self-enabling 24/7 firmware"},"CREATE_TS":{"long":1638797832141},"UPDATE_TS":{"long":1638797832000},"MY_TIMESTAMP":{"long":-6847804800000},"table":{"string":"ORCLCDB.C##MYUSER.CUSTOMERS"},"scn":{"string":"2159058"},"op_type":{"string":"R"},"op_ts":null,"current_ts":{"string":"1638797921091"},"row_id":null,"username":null}
-# {"ID":5,"FIRST_NAME":{"string":"Hansiain"},"LAST_NAME":{"string":"Coda"},"EMAIL":{"string":"hcoda4@senate.gov"},"GENDER":{"string":"Male"},"CLUB_STATUS":{"string":" "},"COMMENTS":{"string":"Centralized full-range approach"},"CREATE_TS":{"long":1638797832142},"UPDATE_TS":{"long":1638797832000},"MY_TIMESTAMP":{"long":-6847804800000},"table":{"string":"ORCLCDB.C##MYUSER.CUSTOMERS"},"scn":{"string":"2159058"},"op_type":{"string":"R"},"op_ts":null,"current_ts":{"string":"1638797921091"},"row_id":null,"username":null}
-# {"ID":42,"FIRST_NAME":{"string":"Frantz"},"LAST_NAME":{"string":"Kafka"},"EMAIL":{"string":"fkafka@confluent.io"},"GENDER":{"string":"Male"},"CLUB_STATUS":{"string":" "},"COMMENTS":{"string":"Evil is whatever distracts"},"CREATE_TS":{"long":1638797972228},"UPDATE_TS":{"long":1638797972000},"MY_TIMESTAMP":{"long":-6847804800000},"table":{"string":"ORCLCDB.C##MYUSER.CUSTOMERS"},"scn":{"string":"2159378"},"op_type":{"string":"I"},"op_ts":{"string":"1638797972000"},"current_ts":{"string":"1638797977471"},"row_id":{"string":"AAAR32AAHAAAAFeAAF"},"username":{"string":"C##MYUSER"}}
-# {"ID":43,"FIRST_NAME":{"string":"Gregor"},"LAST_NAME":{"string":"Samsa"},"EMAIL":{"string":"gsamsa@confluent.io"},"GENDER":{"string":"Male"},"CLUB_STATUS":{"string":"vincent"},"COMMENTS":{"string":"How about if I sleep a little bit longer and forget all this nonsense"},"CREATE_TS":{"long":1638797972231},"UPDATE_TS":{"long":1638797972000},"MY_TIMESTAMP":{"long":-6847804800000},"table":{"string":"ORCLCDB.C##MYUSER.CUSTOMERS"},"scn":{"string":"2159378"},"op_type":{"string":"I"},"op_ts":{"string":"1638797972000"},"current_ts":{"string":"1638797977476"},"row_id":{"string":"AAAR32AAHAAAAFeAAG"},"username":{"string":"C##MYUSER"}}
-# {"ID":42,"FIRST_NAME":{"string":"Frantz"},"LAST_NAME":{"string":"Kafka"},"EMAIL":{"string":"fkafka@confluent.io"},"GENDER":{"string":"Male"},"CLUB_STATUS":{"string":"gold"},"COMMENTS":{"string":"Evil is whatever distracts"},"CREATE_TS":{"long":1638797972228},"UPDATE_TS":{"long":1638797973000},"MY_TIMESTAMP":{"long":-6847804800000},"table":{"string":"ORCLCDB.C##MYUSER.CUSTOMERS"},"scn":{"string":"2159391"},"op_type":{"string":"U"},"op_ts":{"string":"1638797973000"},"current_ts":{"string":"1638797977487"},"row_id":{"string":"AAAR32AAHAAAAFeAAF"},"username":{"string":"C##MYUSER"}}
-# {"ID":42,"FIRST_NAME":{"string":"Frantz"},"LAST_NAME":{"string":"Kafka"},"EMAIL":{"string":"fkafka@confluent.io"},"GENDER":{"string":"Male"},"CLUB_STATUS":{"string":"gold"},"COMMENTS":{"string":"Evil is whatever distracts"},"CREATE_TS":{"long":1638797972228},"UPDATE_TS":{"long":1638797973000},"MY_TIMESTAMP":{"long":-6847804800000},"table":{"string":"ORCLCDB.C##MYUSER.CUSTOMERS"},"scn":{"string":"2159405"},"op_type":{"string":"D"},"op_ts":{"string":"1638797975000"},"current_ts":{"string":"1638797977494"},"row_id":{"string":"AAAR32AAHAAAAFeAAF"},"username":{"string":"C##MYUSER"}}
-# {"ID":62,"FIRST_NAME":{"string":"Josef"},"LAST_NAME":{"string":"K"},"EMAIL":{"string":"jk@confluent.io"},"GENDER":{"string":"Male"},"CLUB_STATUS":{"string":" "},"COMMENTS":{"string":"How is it even possible for someone to be guilty"},"CREATE_TS":{"long":1638797983092},"UPDATE_TS":{"long":1638797983000},"MY_TIMESTAMP":{"long":-6847804800000},"COUNTRY":{"string":"Poland"},"table":{"string":"ORCLCDB.C##MYUSER.CUSTOMERS"},"scn":{"string":"2161416"},"op_type":{"string":"I"},"op_ts":{"string":"1638797983000"},"current_ts":{"string":"1638797987330"},"row_id":{"string":"AAAR32AAHAAAAFbAAA"},"username":{"string":"C##MYUSER"}}
-# {"ID":43,"FIRST_NAME":{"string":"Gregor"},"LAST_NAME":{"string":"Samsa"},"EMAIL":{"string":"gsamsa@confluent.io"},"GENDER":{"string":"Male"},"CLUB_STATUS":{"string":" "},"COMMENTS":{"string":"How about if I sleep a little bit longer and forget all this nonsense"},"CREATE_TS":{"long":1638797972231},"UPDATE_TS":{"long":1638797983000},"MY_TIMESTAMP":{"long":-6847804800000},"COUNTRY":null,"table":{"string":"ORCLCDB.C##MYUSER.CUSTOMERS"},"scn":{"string":"2161417"},"op_type":{"string":"U"},"op_ts":{"string":"1638797983000"},"current_ts":{"string":"1638797987333"},"row_id":{"string":"AAAR32AAHAAAAFeAAG"},"username":{"string":"C##MYUSER"}}
-# {"ID":43,"FIRST_NAME":{"string":"Gregor"},"LAST_NAME":{"string":"Samsa"},"EMAIL":{"string":"gsamsa@confluent.io"},"GENDER":{"string":"Male"},"CLUB_STATUS":{"string":" "},"COMMENTS":{"string":"How about if I sleep a little bit longer and forget all this nonsense"},"CREATE_TS":{"long":1638797972231},"UPDATE_TS":{"long":1638797984000},"MY_TIMESTAMP":{"long":-6847804800000},"COUNTRY":null,"table":{"string":"ORCLCDB.C##MYUSER.CUSTOMERS"},"scn":{"string":"2161429"},"op_type":{"string":"U"},"op_ts":{"string":"1638797984000"},"current_ts":{"string":"1638797987337"},"row_id":{"string":"AAAR32AAHAAAAFeAAG"},"username":{"string":"C##MYUSER"}}
-# {"ID":62,"FIRST_NAME":{"string":"Josef"},"LAST_NAME":{"string":"K"},"EMAIL":{"string":"jk@confluent.io"},"GENDER":{"string":"Male"},"CLUB_STATUS":{"string":" "},"COMMENTS":{"string":"How is it even possible for someone to be guilty"},"CREATE_TS":{"long":1638797983092},"UPDATE_TS":{"long":1638797984000},"MY_TIMESTAMP":{"long":-6847804800000},"COUNTRY":{"string":"Poland"},"table":{"string":"ORCLCDB.C##MYUSER.CUSTOMERS"},"scn":{"string":"2161429"},"op_type":{"string":"U"},"op_ts":{"string":"1638797984000"},"current_ts":{"string":"1638797987341"},"row_id":{"string":"AAAR32AAHAAAAFbAAA"},"username":{"string":"C##MYUSER"}}
-# Processed a total of 13 messages
-# 13:40:51 ℹ️ Check there is 5 snapshots events
-# 13:40:51 ℹ️ Check there is 3 insert events
-# 13:40:51 ℹ️ Check there is 4 update events
-# 13:40:51 ℹ️ Check there is 1 delete events
-# 13:40:51 ℹ️ Verifying topic redo-log-topic: there should be 9 records
-# {"SCN":{"long":2159378},"START_SCN":{"long":2159378},"COMMIT_SCN":{"long":2159379},"TIMESTAMP":{"long":1638797972000},"START_TIMESTAMP":{"long":1638797972000},"COMMIT_TIMESTAMP":{"long":1638797972000},"XIDUSN":{"long":6},"XIDSLT":{"long":32},"XIDSQN":{"long":813},"XID":{"bytes":"\u0006\u0000 \u0000-\u0003\u0000\u0000"},"PXIDUSN":{"long":6},"PXIDSLT":{"long":32},"PXIDSQN":{"long":813},"PXID":{"bytes":"\u0006\u0000 \u0000-\u0003\u0000\u0000"},"TX_NAME":null,"OPERATION":{"string":"INSERT"},"OPERATION_CODE":{"int":1},"ROLLBACK":{"boolean":false},"SEG_OWNER":{"string":"C##MYUSER"},"SEG_NAME":{"string":"CUSTOMERS"},"TABLE_NAME":{"string":"CUSTOMERS"},"SEG_TYPE":{"int":2},"SEG_TYPE_NAME":{"string":"TABLE"},"TABLE_SPACE":{"string":"USERS"},"ROW_ID":{"string":"AAAR32AAHAAAAFeAAF"},"USERNAME":{"string":"C##MYUSER"},"OS_USERNAME":{"string":"oracle"},"MACHINE_NAME":{"string":"oracle"},"AUDIT_SESSIONID":{"long":120034},"SESSION_NUM":{"long":131},"SERIAL_NUM":{"long":14646},"SESSION_INFO":{"string":"login_username=C##MYUSER client_info= OS_username=oracle Machine_name=oracle OS_terminal=pts/0 OS_process_id=563 OS_program_name=sqlplus@oracle (TNS V1-V3)"},"THREAD_NUM":{"long":1},"SEQUENCE_NUM":{"long":2},"RBASQN":{"long":7},"RBABLK":{"long":98889},"RBABYTE":{"long":16},"UBAFIL":{"long":4},"UBABLK":{"long":16818017},"UBAREC":{"long":20},"UBASQN":{"long":180},"ABS_FILE_NUM":{"long":7},"REL_FILE_NUM":{"long":7},"DATA_BLK_NUM":{"long":350},"DATA_OBJ_NUM":{"long":73206},"DATA_OBJV_NUM":{"long":1},"DATA_OBJD_NUM":{"long":73206},"SQL_REDO":{"string":"insert into \"C##MYUSER\".\"CUSTOMERS\"(\"ID\",\"FIRST_NAME\",\"LAST_NAME\",\"EMAIL\",\"GENDER\",\"CLUB_STATUS\",\"COMMENTS\",\"CREATE_TS\",\"UPDATE_TS\",\"MY_TIMESTAMP\") values ('42','Frantz','Kafka','fkafka@confluent.io','Male',' ','Evil is whatever distracts',TO_TIMESTAMP('2021-12-06 13:39:32.228'),TO_TIMESTAMP('2021-12-06 13:39:32.000'),TO_TIMESTAMP('1753-01-01 00:00:00.000'));"},"SQL_UNDO":{"string":"delete from \"C##MYUSER\".\"CUSTOMERS\" where \"ID\" = '42' and \"FIRST_NAME\" = 'Frantz' and \"LAST_NAME\" = 'Kafka' and \"EMAIL\" = 'fkafka@confluent.io' and \"GENDER\" = 'Male' and \"CLUB_STATUS\" = ' ' and \"COMMENTS\" = 'Evil is whatever distracts' and \"CREATE_TS\" = TO_TIMESTAMP('2021-12-06 13:39:32.228') and \"UPDATE_TS\" = TO_TIMESTAMP('2021-12-06 13:39:32.000') and \"MY_TIMESTAMP\" = TO_TIMESTAMP('1753-01-01 00:00:00.000') and ROWID = 'AAAR32AAHAAAAFeAAF';"},"RS_ID":{"string":" 0x000007.00018249.0010 "},"SSN":{"long":5},"CSF":{"boolean":false},"INFO":null,"STATUS":{"int":0},"REDO_VALUE":{"long":524},"UNDO_VALUE":{"long":525},"SAFE_RESUME_SCN":{"long":0},"CSCN":{"long":2159379},"OBJECT_ID":null,"EDITION_NAME":null,"CLIENT_ID":null,"SRC_CON_NAME":{"string":"CDB$ROOT"},"SRC_CON_ID":{"long":1},"SRC_CON_UID":{"long":1},"SRC_CON_DBID":{"long":0},"SRC_CON_GUID":null,"CON_ID":{"boolean":false}}
-# {"SCN":{"long":2159378},"START_SCN":{"long":2159378},"COMMIT_SCN":{"long":2159379},"TIMESTAMP":{"long":1638797972000},"START_TIMESTAMP":{"long":1638797972000},"COMMIT_TIMESTAMP":{"long":1638797972000},"XIDUSN":{"long":6},"XIDSLT":{"long":32},"XIDSQN":{"long":813},"XID":{"bytes":"\u0006\u0000 \u0000-\u0003\u0000\u0000"},"PXIDUSN":{"long":6},"PXIDSLT":{"long":32},"PXIDSQN":{"long":813},"PXID":{"bytes":"\u0006\u0000 \u0000-\u0003\u0000\u0000"},"TX_NAME":null,"OPERATION":{"string":"INSERT"},"OPERATION_CODE":{"int":1},"ROLLBACK":{"boolean":false},"SEG_OWNER":{"string":"C##MYUSER"},"SEG_NAME":{"string":"CUSTOMERS"},"TABLE_NAME":{"string":"CUSTOMERS"},"SEG_TYPE":{"int":2},"SEG_TYPE_NAME":{"string":"TABLE"},"TABLE_SPACE":{"string":"USERS"},"ROW_ID":{"string":"AAAR32AAHAAAAFeAAG"},"USERNAME":{"string":"C##MYUSER"},"OS_USERNAME":{"string":"oracle"},"MACHINE_NAME":{"string":"oracle"},"AUDIT_SESSIONID":{"long":120034},"SESSION_NUM":{"long":131},"SERIAL_NUM":{"long":14646},"SESSION_INFO":{"string":"login_username=C##MYUSER client_info= OS_username=oracle Machine_name=oracle OS_terminal=pts/0 OS_process_id=563 OS_program_name=sqlplus@oracle (TNS V1-V3)"},"THREAD_NUM":{"long":1},"SEQUENCE_NUM":{"long":3},"RBASQN":{"long":7},"RBABLK":{"long":98890},"RBABYTE":{"long":484},"UBAFIL":{"long":4},"UBABLK":{"long":16818017},"UBAREC":{"long":22},"UBASQN":{"long":180},"ABS_FILE_NUM":{"long":7},"REL_FILE_NUM":{"long":7},"DATA_BLK_NUM":{"long":350},"DATA_OBJ_NUM":{"long":73206},"DATA_OBJV_NUM":{"long":1},"DATA_OBJD_NUM":{"long":73206},"SQL_REDO":{"string":"insert into \"C##MYUSER\".\"CUSTOMERS\"(\"ID\",\"FIRST_NAME\",\"LAST_NAME\",\"EMAIL\",\"GENDER\",\"CLUB_STATUS\",\"COMMENTS\",\"CREATE_TS\",\"UPDATE_TS\",\"MY_TIMESTAMP\") values ('43','Gregor','Samsa','gsamsa@confluent.io','Male','vincent','How about if I sleep a little bit longer and forget all this nonsense',TO_TIMESTAMP('2021-12-06 13:39:32.231'),TO_TIMESTAMP('2021-12-06 13:39:32.000'),TO_TIMESTAMP('1753-01-01 00:00:00.000'));"},"SQL_UNDO":{"string":"delete from \"C##MYUSER\".\"CUSTOMERS\" where \"ID\" = '43' and \"FIRST_NAME\" = 'Gregor' and \"LAST_NAME\" = 'Samsa' and \"EMAIL\" = 'gsamsa@confluent.io' and \"GENDER\" = 'Male' and \"CLUB_STATUS\" = 'vincent' and \"COMMENTS\" = 'How about if I sleep a little bit longer and forget all this nonsense' and \"CREATE_TS\" = TO_TIMESTAMP('2021-12-06 13:39:32.231') and \"UPDATE_TS\" = TO_TIMESTAMP('2021-12-06 13:39:32.000') and \"MY_TIMESTAMP\" = TO_TIMESTAMP('1753-01-01 00:00:00.000') and ROWID = 'AAAR32AAHAAAAFeAAG';"},"RS_ID":{"string":" 0x000007.0001824a.01e4 "},"SSN":{"long":6},"CSF":{"boolean":false},"INFO":null,"STATUS":{"int":0},"REDO_VALUE":{"long":526},"UNDO_VALUE":{"long":527},"SAFE_RESUME_SCN":{"long":0},"CSCN":{"long":2159379},"OBJECT_ID":null,"EDITION_NAME":null,"CLIENT_ID":null,"SRC_CON_NAME":{"string":"CDB$ROOT"},"SRC_CON_ID":{"long":1},"SRC_CON_UID":{"long":1},"SRC_CON_DBID":{"long":0},"SRC_CON_GUID":null,"CON_ID":{"boolean":false}}
-# {"SCN":{"long":2159391},"START_SCN":{"long":2159391},"COMMIT_SCN":{"long":2159392},"TIMESTAMP":{"long":1638797973000},"START_TIMESTAMP":{"long":1638797973000},"COMMIT_TIMESTAMP":{"long":1638797973000},"XIDUSN":{"long":3},"XIDSLT":{"long":31},"XIDSQN":{"long":812},"XID":{"bytes":"\u0003\u0000\u001F\u0000,\u0003\u0000\u0000"},"PXIDUSN":{"long":3},"PXIDSLT":{"long":31},"PXIDSQN":{"long":812},"PXID":{"bytes":"\u0003\u0000\u001F\u0000,\u0003\u0000\u0000"},"TX_NAME":null,"OPERATION":{"string":"UPDATE"},"OPERATION_CODE":{"int":3},"ROLLBACK":{"boolean":false},"SEG_OWNER":{"string":"C##MYUSER"},"SEG_NAME":{"string":"CUSTOMERS"},"TABLE_NAME":{"string":"CUSTOMERS"},"SEG_TYPE":{"int":2},"SEG_TYPE_NAME":{"string":"TABLE"},"TABLE_SPACE":{"string":"USERS"},"ROW_ID":{"string":"AAAR32AAHAAAAFeAAF"},"USERNAME":{"string":"C##MYUSER"},"OS_USERNAME":{"string":"oracle"},"MACHINE_NAME":{"string":"oracle"},"AUDIT_SESSIONID":{"long":120035},"SESSION_NUM":{"long":131},"SERIAL_NUM":{"long":43298},"SESSION_INFO":{"string":"login_username=C##MYUSER client_info= OS_username=oracle Machine_name=oracle OS_terminal=pts/0 OS_process_id=573 OS_program_name=sqlplus@oracle (TNS V1-V3)"},"THREAD_NUM":{"long":1},"SEQUENCE_NUM":{"long":3},"RBASQN":{"long":7},"RBABLK":{"long":98899},"RBABYTE":{"long":104},"UBAFIL":{"long":4},"UBABLK":{"long":16817521},"UBAREC":{"long":33},"UBASQN":{"long":164},"ABS_FILE_NUM":{"long":4},"REL_FILE_NUM":{"long":7},"DATA_BLK_NUM":{"long":350},"DATA_OBJ_NUM":{"long":73206},"DATA_OBJV_NUM":{"long":1},"DATA_OBJD_NUM":{"long":73206},"SQL_REDO":{"string":"update \"C##MYUSER\".\"CUSTOMERS\" set \"CLUB_STATUS\" = 'gold', \"UPDATE_TS\" = TO_TIMESTAMP('2021-12-06 13:39:33.000') where \"ID\" = '42' and \"FIRST_NAME\" = 'Frantz' and \"LAST_NAME\" = 'Kafka' and \"EMAIL\" = 'fkafka@confluent.io' and \"GENDER\" = 'Male' and \"CLUB_STATUS\" = ' ' and \"COMMENTS\" = 'Evil is whatever distracts' and \"CREATE_TS\" = TO_TIMESTAMP('2021-12-06 13:39:32.228') and \"UPDATE_TS\" = TO_TIMESTAMP('2021-12-06 13:39:32.000') and \"MY_TIMESTAMP\" = TO_TIMESTAMP('1753-01-01 00:00:00.000') and ROWID = 'AAAR32AAHAAAAFeAAF';"},"SQL_UNDO":{"string":"update \"C##MYUSER\".\"CUSTOMERS\" set \"CLUB_STATUS\" = ' ', \"UPDATE_TS\" = TO_TIMESTAMP('2021-12-06 13:39:32.000') where \"ID\" = '42' and \"FIRST_NAME\" = 'Frantz' and \"LAST_NAME\" = 'Kafka' and \"EMAIL\" = 'fkafka@confluent.io' and \"GENDER\" = 'Male' and \"CLUB_STATUS\" = 'gold' and \"COMMENTS\" = 'Evil is whatever distracts' and \"CREATE_TS\" = TO_TIMESTAMP('2021-12-06 13:39:32.228') and \"UPDATE_TS\" = TO_TIMESTAMP('2021-12-06 13:39:33.000') and \"MY_TIMESTAMP\" = TO_TIMESTAMP('1753-01-01 00:00:00.000') and ROWID = 'AAAR32AAHAAAAFeAAF';"},"RS_ID":{"string":" 0x000007.00018253.0068 "},"SSN":{"long":0},"CSF":{"boolean":false},"INFO":null,"STATUS":{"int":0},"REDO_VALUE":{"long":12},"UNDO_VALUE":{"long":13},"SAFE_RESUME_SCN":{"long":0},"CSCN":{"long":2159392},"OBJECT_ID":null,"EDITION_NAME":null,"CLIENT_ID":null,"SRC_CON_NAME":{"string":"CDB$ROOT"},"SRC_CON_ID":{"long":1},"SRC_CON_UID":{"long":1},"SRC_CON_DBID":{"long":0},"SRC_CON_GUID":null,"CON_ID":{"boolean":false}}
-# {"SCN":{"long":2159405},"START_SCN":{"long":2159405},"COMMIT_SCN":{"long":2159406},"TIMESTAMP":{"long":1638797975000},"START_TIMESTAMP":{"long":1638797975000},"COMMIT_TIMESTAMP":{"long":1638797975000},"XIDUSN":{"long":5},"XIDSLT":{"long":19},"XIDSQN":{"long":801},"XID":{"bytes":"\u0005\u0000\u0013\u0000!\u0003\u0000\u0000"},"PXIDUSN":{"long":5},"PXIDSLT":{"long":19},"PXIDSQN":{"long":801},"PXID":{"bytes":"\u0005\u0000\u0013\u0000!\u0003\u0000\u0000"},"TX_NAME":null,"OPERATION":{"string":"DELETE"},"OPERATION_CODE":{"int":2},"ROLLBACK":{"boolean":false},"SEG_OWNER":{"string":"C##MYUSER"},"SEG_NAME":{"string":"CUSTOMERS"},"TABLE_NAME":{"string":"CUSTOMERS"},"SEG_TYPE":{"int":2},"SEG_TYPE_NAME":{"string":"TABLE"},"TABLE_SPACE":{"string":"USERS"},"ROW_ID":{"string":"AAAR32AAHAAAAFeAAF"},"USERNAME":{"string":"C##MYUSER"},"OS_USERNAME":{"string":"oracle"},"MACHINE_NAME":{"string":"oracle"},"AUDIT_SESSIONID":{"long":120036},"SESSION_NUM":{"long":131},"SERIAL_NUM":{"long":15807},"SESSION_INFO":{"string":"login_username=C##MYUSER client_info= OS_username=oracle Machine_name=oracle OS_terminal=pts/0 OS_process_id=582 OS_program_name=sqlplus@oracle (TNS V1-V3)"},"THREAD_NUM":{"long":1},"SEQUENCE_NUM":{"long":2},"RBASQN":{"long":7},"RBABLK":{"long":98906},"RBABYTE":{"long":16},"UBAFIL":{"long":4},"UBABLK":{"long":0},"UBAREC":{"long":0},"UBASQN":{"long":0},"ABS_FILE_NUM":{"long":4},"REL_FILE_NUM":{"long":7},"DATA_BLK_NUM":{"long":350},"DATA_OBJ_NUM":{"long":73206},"DATA_OBJV_NUM":{"long":1},"DATA_OBJD_NUM":{"long":73206},"SQL_REDO":{"string":"delete from \"C##MYUSER\".\"CUSTOMERS\" where \"ID\" = '42' and \"FIRST_NAME\" = 'Frantz' and \"LAST_NAME\" = 'Kafka' and \"EMAIL\" = 'fkafka@confluent.io' and \"GENDER\" = 'Male' and \"CLUB_STATUS\" = 'gold' and \"COMMENTS\" = 'Evil is whatever distracts' and \"CREATE_TS\" = TO_TIMESTAMP('2021-12-06 13:39:32.228') and \"UPDATE_TS\" = TO_TIMESTAMP('2021-12-06 13:39:33.000') and \"MY_TIMESTAMP\" = TO_TIMESTAMP('1753-01-01 00:00:00.000') and ROWID = 'AAAR32AAHAAAAFeAAF';"},"SQL_UNDO":{"string":"insert into \"C##MYUSER\".\"CUSTOMERS\"(\"ID\",\"FIRST_NAME\",\"LAST_NAME\",\"EMAIL\",\"GENDER\",\"CLUB_STATUS\",\"COMMENTS\",\"CREATE_TS\",\"UPDATE_TS\",\"MY_TIMESTAMP\") values ('42','Frantz','Kafka','fkafka@confluent.io','Male','gold','Evil is whatever distracts',TO_TIMESTAMP('2021-12-06 13:39:32.228'),TO_TIMESTAMP('2021-12-06 13:39:33.000'),TO_TIMESTAMP('1753-01-01 00:00:00.000'));"},"RS_ID":{"string":" 0x000007.0001825a.0010 "},"SSN":{"long":0},"CSF":{"boolean":false},"INFO":null,"STATUS":{"int":0},"REDO_VALUE":{"long":10},"UNDO_VALUE":{"long":11},"SAFE_RESUME_SCN":{"long":0},"CSCN":{"long":2159406},"OBJECT_ID":null,"EDITION_NAME":null,"CLIENT_ID":null,"SRC_CON_NAME":{"string":"CDB$ROOT"},"SRC_CON_ID":{"long":1},"SRC_CON_UID":{"long":1},"SRC_CON_DBID":{"long":0},"SRC_CON_GUID":null,"CON_ID":{"boolean":false}}
-# {"SCN":{"long":2160660},"START_SCN":null,"COMMIT_SCN":null,"TIMESTAMP":{"long":1638797978000},"START_TIMESTAMP":null,"COMMIT_TIMESTAMP":null,"XIDUSN":{"long":7},"XIDSLT":{"long":17},"XIDSQN":{"long":814},"XID":{"bytes":"\u0007\u0000\u0011\u0000.\u0003\u0000\u0000"},"PXIDUSN":{"long":7},"PXIDSLT":{"long":17},"PXIDSQN":{"long":814},"PXID":{"bytes":"\u0007\u0000\u0011\u0000.\u0003\u0000\u0000"},"TX_NAME":null,"OPERATION":{"string":"DDL"},"OPERATION_CODE":{"int":5},"ROLLBACK":{"boolean":false},"SEG_OWNER":{"string":"C##MYUSER"},"SEG_NAME":{"string":"CUSTOMERS"},"TABLE_NAME":{"string":"CUSTOMERS"},"SEG_TYPE":{"int":2},"SEG_TYPE_NAME":{"string":"TABLE"},"TABLE_SPACE":null,"ROW_ID":{"string":"AAAAAAAAAAAAAAAAAB"},"USERNAME":{"string":"C##MYUSER"},"OS_USERNAME":{"string":"UNKNOWN"},"MACHINE_NAME":{"string":"UNKNOWN"},"AUDIT_SESSIONID":{"long":120037},"SESSION_NUM":{"long":131},"SERIAL_NUM":{"long":26386},"SESSION_INFO":{"string":"UNKNOWN"},"THREAD_NUM":{"long":1},"SEQUENCE_NUM":{"long":4},"RBASQN":{"long":9},"RBABLK":{"long":5},"RBABYTE":{"long":200},"UBAFIL":{"long":4},"UBABLK":{"long":0},"UBAREC":{"long":0},"UBASQN":{"long":0},"ABS_FILE_NUM":{"long":0},"REL_FILE_NUM":{"long":0},"DATA_BLK_NUM":{"long":0},"DATA_OBJ_NUM":{"long":73206},"DATA_OBJV_NUM":{"long":2},"DATA_OBJD_NUM":{"long":0},"SQL_REDO":{"string":"  alter table CUSTOMERS add (\n    country VARCHAR(50)\n  );"},"SQL_UNDO":null,"RS_ID":{"string":" 0x000009.00000005.00c8 "},"SSN":{"long":0},"CSF":{"boolean":false},"INFO":{"string":"USER DDL (PlSql=0 RecDep=0)"},"STATUS":{"int":0},"REDO_VALUE":{"long":2046},"UNDO_VALUE":{"long":2047},"SAFE_RESUME_SCN":null,"CSCN":null,"OBJECT_ID":null,"EDITION_NAME":null,"CLIENT_ID":{"string":"UNKNOWN"},"SRC_CON_NAME":{"string":"CDB$ROOT"},"SRC_CON_ID":{"long":1},"SRC_CON_UID":{"long":1},"SRC_CON_DBID":{"long":0},"SRC_CON_GUID":null,"CON_ID":{"boolean":false}}
-# {"SCN":{"long":2161416},"START_SCN":{"long":2161416},"COMMIT_SCN":{"long":2161418},"TIMESTAMP":{"long":1638797983000},"START_TIMESTAMP":{"long":1638797983000},"COMMIT_TIMESTAMP":{"long":1638797983000},"XIDUSN":{"long":8},"XIDSLT":{"long":5},"XIDSQN":{"long":837},"XID":{"bytes":"\b\u0000\u0005\u0000E\u0003\u0000\u0000"},"PXIDUSN":{"long":8},"PXIDSLT":{"long":5},"PXIDSQN":{"long":837},"PXID":{"bytes":"\b\u0000\u0005\u0000E\u0003\u0000\u0000"},"TX_NAME":null,"OPERATION":{"string":"INSERT"},"OPERATION_CODE":{"int":1},"ROLLBACK":{"boolean":false},"SEG_OWNER":{"string":"C##MYUSER"},"SEG_NAME":{"string":"CUSTOMERS"},"TABLE_NAME":{"string":"CUSTOMERS"},"SEG_TYPE":{"int":2},"SEG_TYPE_NAME":{"string":"TABLE"},"TABLE_SPACE":{"string":"USERS"},"ROW_ID":{"string":"AAAR32AAHAAAAFbAAA"},"USERNAME":{"string":"C##MYUSER"},"OS_USERNAME":{"string":"oracle"},"MACHINE_NAME":{"string":"oracle"},"AUDIT_SESSIONID":{"long":130003},"SESSION_NUM":{"long":377},"SERIAL_NUM":{"long":36865},"SESSION_INFO":{"string":"login_username=C##MYUSER client_info= OS_username=oracle Machine_name=oracle OS_terminal=pts/0 OS_process_id=603 OS_program_name=sqlplus@oracle (TNS V1-V3)"},"THREAD_NUM":{"long":1},"SEQUENCE_NUM":{"long":2},"RBASQN":{"long":11},"RBABLK":{"long":12},"RBABYTE":{"long":16},"UBAFIL":{"long":4},"UBABLK":{"long":16818934},"UBAREC":{"long":29},"UBASQN":{"long":251},"ABS_FILE_NUM":{"long":7},"REL_FILE_NUM":{"long":7},"DATA_BLK_NUM":{"long":347},"DATA_OBJ_NUM":{"long":73206},"DATA_OBJV_NUM":{"long":2},"DATA_OBJD_NUM":{"long":73206},"SQL_REDO":{"string":"insert into \"C##MYUSER\".\"CUSTOMERS\"(\"ID\",\"FIRST_NAME\",\"LAST_NAME\",\"EMAIL\",\"GENDER\",\"CLUB_STATUS\",\"COMMENTS\",\"CREATE_TS\",\"UPDATE_TS\",\"MY_TIMESTAMP\",\"COUNTRY\") values ('62','Josef','K','jk@confluent.io','Male',' ','How is it even possible for someone to be guilty',TO_TIMESTAMP('2021-12-06 13:39:43.092'),TO_TIMESTAMP('2021-12-06 13:39:43.000'),TO_TIMESTAMP('1753-01-01 00:00:00.000'),'Poland');"},"SQL_UNDO":{"string":"delete from \"C##MYUSER\".\"CUSTOMERS\" where \"ID\" = '62' and \"FIRST_NAME\" = 'Josef' and \"LAST_NAME\" = 'K' and \"EMAIL\" = 'jk@confluent.io' and \"GENDER\" = 'Male' and \"CLUB_STATUS\" = ' ' and \"COMMENTS\" = 'How is it even possible for someone to be guilty' and \"CREATE_TS\" = TO_TIMESTAMP('2021-12-06 13:39:43.092') and \"UPDATE_TS\" = TO_TIMESTAMP('2021-12-06 13:39:43.000') and \"MY_TIMESTAMP\" = TO_TIMESTAMP('1753-01-01 00:00:00.000') and \"COUNTRY\" = 'Poland' and ROWID = 'AAAR32AAHAAAAFbAAA';"},"RS_ID":{"string":" 0x00000b.0000000c.0010 "},"SSN":{"long":0},"CSF":{"boolean":false},"INFO":null,"STATUS":{"int":0},"REDO_VALUE":{"long":26},"UNDO_VALUE":{"long":27},"SAFE_RESUME_SCN":{"long":0},"CSCN":{"long":2161418},"OBJECT_ID":null,"EDITION_NAME":null,"CLIENT_ID":null,"SRC_CON_NAME":{"string":"CDB$ROOT"},"SRC_CON_ID":{"long":1},"SRC_CON_UID":{"long":1},"SRC_CON_DBID":{"long":0},"SRC_CON_GUID":null,"CON_ID":{"boolean":false}}
-# {"SCN":{"long":2161417},"START_SCN":{"long":2161416},"COMMIT_SCN":{"long":2161418},"TIMESTAMP":{"long":1638797983000},"START_TIMESTAMP":{"long":1638797983000},"COMMIT_TIMESTAMP":{"long":1638797983000},"XIDUSN":{"long":8},"XIDSLT":{"long":5},"XIDSQN":{"long":837},"XID":{"bytes":"\b\u0000\u0005\u0000E\u0003\u0000\u0000"},"PXIDUSN":{"long":8},"PXIDSLT":{"long":5},"PXIDSQN":{"long":837},"PXID":{"bytes":"\b\u0000\u0005\u0000E\u0003\u0000\u0000"},"TX_NAME":null,"OPERATION":{"string":"UPDATE"},"OPERATION_CODE":{"int":3},"ROLLBACK":{"boolean":false},"SEG_OWNER":{"string":"C##MYUSER"},"SEG_NAME":{"string":"CUSTOMERS"},"TABLE_NAME":{"string":"CUSTOMERS"},"SEG_TYPE":{"int":2},"SEG_TYPE_NAME":{"string":"TABLE"},"TABLE_SPACE":{"string":"USERS"},"ROW_ID":{"string":"AAAR32AAHAAAAFeAAG"},"USERNAME":{"string":"C##MYUSER"},"OS_USERNAME":{"string":"oracle"},"MACHINE_NAME":{"string":"oracle"},"AUDIT_SESSIONID":{"long":130003},"SESSION_NUM":{"long":377},"SERIAL_NUM":{"long":36865},"SESSION_INFO":{"string":"login_username=C##MYUSER client_info= OS_username=oracle Machine_name=oracle OS_terminal=pts/0 OS_process_id=603 OS_program_name=sqlplus@oracle (TNS V1-V3)"},"THREAD_NUM":{"long":1},"SEQUENCE_NUM":{"long":4},"RBASQN":{"long":11},"RBABLK":{"long":17},"RBABYTE":{"long":40},"UBAFIL":{"long":4},"UBABLK":{"long":16818934},"UBAREC":{"long":31},"UBASQN":{"long":251},"ABS_FILE_NUM":{"long":4},"REL_FILE_NUM":{"long":7},"DATA_BLK_NUM":{"long":350},"DATA_OBJ_NUM":{"long":73206},"DATA_OBJV_NUM":{"long":2},"DATA_OBJD_NUM":{"long":73206},"SQL_REDO":{"string":"update \"C##MYUSER\".\"CUSTOMERS\" set \"CLUB_STATUS\" = ' ', \"UPDATE_TS\" = TO_TIMESTAMP('2021-12-06 13:39:43.000') where \"ID\" = '43' and \"FIRST_NAME\" = 'Gregor' and \"LAST_NAME\" = 'Samsa' and \"EMAIL\" = 'gsamsa@confluent.io' and \"GENDER\" = 'Male' and \"CLUB_STATUS\" = 'vincent' and \"COMMENTS\" = 'How about if I sleep a little bit longer and forget all this nonsense' and \"CREATE_TS\" = TO_TIMESTAMP('2021-12-06 13:39:32.231') and \"UPDATE_TS\" = TO_TIMESTAMP('2021-12-06 13:39:32.000') and \"MY_TIMESTAMP\" = TO_TIMESTAMP('1753-01-01 00:00:00.000') and \"COUNTRY\" IS NULL and ROWID = 'AAAR32AAHAAAAFeAAG';"},"SQL_UNDO":{"string":"update \"C##MYUSER\".\"CUSTOMERS\" set \"CLUB_STATUS\" = 'vincent', \"UPDATE_TS\" = TO_TIMESTAMP('2021-12-06 13:39:32.000') where \"ID\" = '43' and \"FIRST_NAME\" = 'Gregor' and \"LAST_NAME\" = 'Samsa' and \"EMAIL\" = 'gsamsa@confluent.io' and \"GENDER\" = 'Male' and \"CLUB_STATUS\" = ' ' and \"COMMENTS\" = 'How about if I sleep a little bit longer and forget all this nonsense' and \"CREATE_TS\" = TO_TIMESTAMP('2021-12-06 13:39:32.231') and \"UPDATE_TS\" = TO_TIMESTAMP('2021-12-06 13:39:43.000') and \"MY_TIMESTAMP\" = TO_TIMESTAMP('1753-01-01 00:00:00.000') and \"COUNTRY\" IS NULL and ROWID = 'AAAR32AAHAAAAFeAAG';"},"RS_ID":{"string":" 0x00000b.00000011.0028 "},"SSN":{"long":0},"CSF":{"boolean":false},"INFO":null,"STATUS":{"int":0},"REDO_VALUE":{"long":30},"UNDO_VALUE":{"long":31},"SAFE_RESUME_SCN":{"long":0},"CSCN":{"long":2161418},"OBJECT_ID":null,"EDITION_NAME":null,"CLIENT_ID":null,"SRC_CON_NAME":{"string":"CDB$ROOT"},"SRC_CON_ID":{"long":1},"SRC_CON_UID":{"long":1},"SRC_CON_DBID":{"long":0},"SRC_CON_GUID":null,"CON_ID":{"boolean":false}}
-# {"SCN":{"long":2161429},"START_SCN":{"long":2161429},"COMMIT_SCN":{"long":2161430},"TIMESTAMP":{"long":1638797984000},"START_TIMESTAMP":{"long":1638797984000},"COMMIT_TIMESTAMP":{"long":1638797984000},"XIDUSN":{"long":10},"XIDSLT":{"long":30},"XIDSQN":{"long":853},"XID":{"bytes":"\n\u0000\u001E\u0000U\u0003\u0000\u0000"},"PXIDUSN":{"long":10},"PXIDSLT":{"long":30},"PXIDSQN":{"long":853},"PXID":{"bytes":"\n\u0000\u001E\u0000U\u0003\u0000\u0000"},"TX_NAME":null,"OPERATION":{"string":"UPDATE"},"OPERATION_CODE":{"int":3},"ROLLBACK":{"boolean":false},"SEG_OWNER":{"string":"C##MYUSER"},"SEG_NAME":{"string":"CUSTOMERS"},"TABLE_NAME":{"string":"CUSTOMERS"},"SEG_TYPE":{"int":2},"SEG_TYPE_NAME":{"string":"TABLE"},"TABLE_SPACE":{"string":"USERS"},"ROW_ID":{"string":"AAAR32AAHAAAAFeAAG"},"USERNAME":{"string":"C##MYUSER"},"OS_USERNAME":{"string":"oracle"},"MACHINE_NAME":{"string":"oracle"},"AUDIT_SESSIONID":{"long":130004},"SESSION_NUM":{"long":380},"SERIAL_NUM":{"long":23562},"SESSION_INFO":{"string":"login_username=C##MYUSER client_info= OS_username=oracle Machine_name=oracle OS_terminal=pts/0 OS_process_id=615 OS_program_name=sqlplus@oracle (TNS V1-V3)"},"THREAD_NUM":{"long":1},"SEQUENCE_NUM":{"long":3},"RBASQN":{"long":11},"RBABLK":{"long":25},"RBABYTE":{"long":104},"UBAFIL":{"long":4},"UBABLK":{"long":16820218},"UBAREC":{"long":5},"UBASQN":{"long":173},"ABS_FILE_NUM":{"long":4},"REL_FILE_NUM":{"long":7},"DATA_BLK_NUM":{"long":350},"DATA_OBJ_NUM":{"long":73206},"DATA_OBJV_NUM":{"long":2},"DATA_OBJD_NUM":{"long":73206},"SQL_REDO":{"string":"update \"C##MYUSER\".\"CUSTOMERS\" set \"CLUB_STATUS\" = ' ', \"UPDATE_TS\" = TO_TIMESTAMP('2021-12-06 13:39:44.000') where \"ID\" = '43' and \"FIRST_NAME\" = 'Gregor' and \"LAST_NAME\" = 'Samsa' and \"EMAIL\" = 'gsamsa@confluent.io' and \"GENDER\" = 'Male' and \"CLUB_STATUS\" = ' ' and \"COMMENTS\" = 'How about if I sleep a little bit longer and forget all this nonsense' and \"CREATE_TS\" = TO_TIMESTAMP('2021-12-06 13:39:32.231') and \"UPDATE_TS\" = TO_TIMESTAMP('2021-12-06 13:39:43.000') and \"MY_TIMESTAMP\" = TO_TIMESTAMP('1753-01-01 00:00:00.000') and \"COUNTRY\" IS NULL and ROWID = 'AAAR32AAHAAAAFeAAG';"},"SQL_UNDO":{"string":"update \"C##MYUSER\".\"CUSTOMERS\" set \"CLUB_STATUS\" = ' ', \"UPDATE_TS\" = TO_TIMESTAMP('2021-12-06 13:39:43.000') where \"ID\" = '43' and \"FIRST_NAME\" = 'Gregor' and \"LAST_NAME\" = 'Samsa' and \"EMAIL\" = 'gsamsa@confluent.io' and \"GENDER\" = 'Male' and \"CLUB_STATUS\" = ' ' and \"COMMENTS\" = 'How about if I sleep a little bit longer and forget all this nonsense' and \"CREATE_TS\" = TO_TIMESTAMP('2021-12-06 13:39:32.231') and \"UPDATE_TS\" = TO_TIMESTAMP('2021-12-06 13:39:44.000') and \"MY_TIMESTAMP\" = TO_TIMESTAMP('1753-01-01 00:00:00.000') and \"COUNTRY\" IS NULL and ROWID = 'AAAR32AAHAAAAFeAAG';"},"RS_ID":{"string":" 0x00000b.00000019.0068 "},"SSN":{"long":0},"CSF":{"boolean":false},"INFO":null,"STATUS":{"int":0},"REDO_VALUE":{"long":44},"UNDO_VALUE":{"long":45},"SAFE_RESUME_SCN":{"long":0},"CSCN":{"long":2161430},"OBJECT_ID":null,"EDITION_NAME":null,"CLIENT_ID":null,"SRC_CON_NAME":{"string":"CDB$ROOT"},"SRC_CON_ID":{"long":1},"SRC_CON_UID":{"long":1},"SRC_CON_DBID":{"long":0},"SRC_CON_GUID":null,"CON_ID":{"boolean":false}}
-# {"SCN":{"long":2161429},"START_SCN":{"long":2161429},"COMMIT_SCN":{"long":2161430},"TIMESTAMP":{"long":1638797984000},"START_TIMESTAMP":{"long":1638797984000},"COMMIT_TIMESTAMP":{"long":1638797984000},"XIDUSN":{"long":10},"XIDSLT":{"long":30},"XIDSQN":{"long":853},"XID":{"bytes":"\n\u0000\u001E\u0000U\u0003\u0000\u0000"},"PXIDUSN":{"long":10},"PXIDSLT":{"long":30},"PXIDSQN":{"long":853},"PXID":{"bytes":"\n\u0000\u001E\u0000U\u0003\u0000\u0000"},"TX_NAME":null,"OPERATION":{"string":"UPDATE"},"OPERATION_CODE":{"int":3},"ROLLBACK":{"boolean":false},"SEG_OWNER":{"string":"C##MYUSER"},"SEG_NAME":{"string":"CUSTOMERS"},"TABLE_NAME":{"string":"CUSTOMERS"},"SEG_TYPE":{"int":2},"SEG_TYPE_NAME":{"string":"TABLE"},"TABLE_SPACE":{"string":"USERS"},"ROW_ID":{"string":"AAAR32AAHAAAAFbAAA"},"USERNAME":{"string":"C##MYUSER"},"OS_USERNAME":{"string":"oracle"},"MACHINE_NAME":{"string":"oracle"},"AUDIT_SESSIONID":{"long":130004},"SESSION_NUM":{"long":380},"SERIAL_NUM":{"long":23562},"SESSION_INFO":{"string":"login_username=C##MYUSER client_info= OS_username=oracle Machine_name=oracle OS_terminal=pts/0 OS_process_id=615 OS_program_name=sqlplus@oracle (TNS V1-V3)"},"THREAD_NUM":{"long":1},"SEQUENCE_NUM":{"long":5},"RBASQN":{"long":11},"RBABLK":{"long":26},"RBABYTE":{"long":408},"UBAFIL":{"long":4},"UBABLK":{"long":16820218},"UBAREC":{"long":7},"UBASQN":{"long":173},"ABS_FILE_NUM":{"long":4},"REL_FILE_NUM":{"long":7},"DATA_BLK_NUM":{"long":347},"DATA_OBJ_NUM":{"long":73206},"DATA_OBJV_NUM":{"long":2},"DATA_OBJD_NUM":{"long":73206},"SQL_REDO":{"string":"update \"C##MYUSER\".\"CUSTOMERS\" set \"CLUB_STATUS\" = ' ', \"UPDATE_TS\" = TO_TIMESTAMP('2021-12-06 13:39:44.000') where \"ID\" = '62' and \"FIRST_NAME\" = 'Josef' and \"LAST_NAME\" = 'K' and \"EMAIL\" = 'jk@confluent.io' and \"GENDER\" = 'Male' and \"CLUB_STATUS\" = ' ' and \"COMMENTS\" = 'How is it even possible for someone to be guilty' and \"CREATE_TS\" = TO_TIMESTAMP('2021-12-06 13:39:43.092') and \"UPDATE_TS\" = TO_TIMESTAMP('2021-12-06 13:39:43.000') and \"MY_TIMESTAMP\" = TO_TIMESTAMP('1753-01-01 00:00:00.000') and \"COUNTRY\" = 'Poland' and ROWID = 'AAAR32AAHAAAAFbAAA';"},"SQL_UNDO":{"string":"update \"C##MYUSER\".\"CUSTOMERS\" set \"CLUB_STATUS\" = ' ', \"UPDATE_TS\" = TO_TIMESTAMP('2021-12-06 13:39:43.000') where \"ID\" = '62' and \"FIRST_NAME\" = 'Josef' and \"LAST_NAME\" = 'K' and \"EMAIL\" = 'jk@confluent.io' and \"GENDER\" = 'Male' and \"CLUB_STATUS\" = ' ' and \"COMMENTS\" = 'How is it even possible for someone to be guilty' and \"CREATE_TS\" = TO_TIMESTAMP('2021-12-06 13:39:43.092') and \"UPDATE_TS\" = TO_TIMESTAMP('2021-12-06 13:39:44.000') and \"MY_TIMESTAMP\" = TO_TIMESTAMP('1753-01-01 00:00:00.000') and \"COUNTRY\" = 'Poland' and ROWID = 'AAAR32AAHAAAAFbAAA';"},"RS_ID":{"string":" 0x00000b.0000001a.0198 "},"SSN":{"long":0},"CSF":{"boolean":false},"INFO":null,"STATUS":{"int":0},"REDO_VALUE":{"long":48},"UNDO_VALUE":{"long":49},"SAFE_RESUME_SCN":{"long":0},"CSCN":{"long":2161430},"OBJECT_ID":null,"EDITION_NAME":null,"CLIENT_ID":null,"SRC_CON_NAME":{"string":"CDB$ROOT"},"SRC_CON_ID":{"long":1},"SRC_CON_UID":{"long":1},"SRC_CON_DBID":{"long":0},"SRC_CON_GUID":null,"CON_ID":{"boolean":false}}
-# Processed a total of 9 messages
+# {"SCN":{"long":2163159},"START_SCN":{"long":2163159},"COMMIT_SCN":{"long":2163160},"TIMESTAMP":{"long":1638805822000},"START_TIMESTAMP":{"long":1638805822000},"COMMIT_TIMESTAMP":{"long":1638805822000},"XIDUSN":{"long":10},"XIDSLT":{"long":1},"XIDSQN":{"long":855},"XID":{"bytes":"\n\u0000\u0001\u0000W\u0003\u0000\u0000"},"PXIDUSN":{"long":10},"PXIDSLT":{"long":1},"PXIDSQN":{"long":855},"PXID":{"bytes":"\n\u0000\u0001\u0000W\u0003\u0000\u0000"},"TX_NAME":null,"OPERATION":{"string":"INSERT"},"OPERATION_CODE":{"int":1},"ROLLBACK":{"boolean":false},"SEG_OWNER":{"string":"C##MYUSER"},"SEG_NAME":{"string":"CUSTOMERS"},"TABLE_NAME":{"string":"CUSTOMERS"},"SEG_TYPE":{"int":2},"SEG_TYPE_NAME":{"string":"TABLE"},"TABLE_SPACE":{"string":"USERS"},"ROW_ID":{"string":"AAAR32AAHAAAAFbAAA"},"USERNAME":{"string":"C##MYUSER"},"OS_USERNAME":{"string":"oracle"},"MACHINE_NAME":{"string":"oracle"},"AUDIT_SESSIONID":{"long":130003},"SESSION_NUM":{"long":750},"SERIAL_NUM":{"long":16759},"SESSION_INFO":{"string":"login_username=C##MYUSER client_info= OS_username=oracle Machine_name=oracle OS_terminal=pts/0 OS_process_id=551 OS_program_name=sqlplus@oracle (TNS V1-V3)"},"THREAD_NUM":{"long":1},"SEQUENCE_NUM":{"long":2},"RBASQN":{"long":11},"RBABLK":{"long":53},"RBABYTE":{"long":156},"UBAFIL":{"long":4},"UBABLK":{"long":16777489},"UBAREC":{"long":44},"UBASQN":{"long":174},"ABS_FILE_NUM":{"long":7},"REL_FILE_NUM":{"long":7},"DATA_BLK_NUM":{"long":347},"DATA_OBJ_NUM":{"long":73206},"DATA_OBJV_NUM":{"long":69},"DATA_OBJD_NUM":{"long":73206},"SQL_REDO":{"string":"insert into \"C##MYUSER\".\"CUSTOMERS\"(\"GRGR_CK\",\"CICI_ID\",\"GRGR_ID\",\"PAGR_CK\",\"GRGR_NAME\",\"GRGR_ADDR1\",\"GRGR_ADDR2\",\"GRGR_ADDR3\",\"GRGR_CITY\",\"GRGR_STATE\",\"GRGR_ZIP\",\"GRGR_COUNTY\",\"GRGR_CTRY_CD\",\"GRGR_PHONE\",\"GRGR_PHONE_EXT\",\"GRGR_FAX\",\"GRGR_FAX_EXT\",\"GRGR_EMAIL\",\"GRGR_MCTR_TYPE\",\"GRGR_MCTR_VIP\",\"MCAR_AREA_ID\",\"CSCS_ID\",\"GRGR_STS\",\"GRGR_ORIG_EFF_DT\",\"GRGR_TERM_DT\",\"GRGR_MCTR_TRSN\",\"EXCD_ID\",\"GRGR_RNST_DT\",\"GRGR_CONV_DT\",\"GRGR_RENEW_MMDD\",\"GRGR_PREV_ANNV_DT\",\"GRGR_CURR_ANNV_DT\",\"GRGR_NEXT_ANNV_DT\",\"GRGR_MCTR_PTYP\",\"GRGR_UNDW_USUS_ID\",\"GRGR_CAP_IND\",\"GRGR_LAST_CAP_DT\",\"GRGR_CAP_BAT_STS\",\"GRGR_BILL_LEVEL\",\"GRGR_LMT_ADJ_MOS\",\"GRGR_BL_CONV_DT\",\"GRGR_NAME_XLOW\",\"GRGR_CITY_XLOW\",\"GRGR_MCTR_LANG\",\"GRGR_EXTN_ADDR_IND\",\"WMDS_SEQ_NO\",\"GRGR_TOTAL_EMPL\",\"GRGR_TOTAL_ELIG\",\"GRGR_TOTAL_CONTR\",\"GRGR_POL_NO\",\"CRCY_ID\",\"GRGR_EIN\",\"GRGR_ERIS_MMDD\",\"GRGR_RECD_DT\",\"GRGR_DEN_CHT_IND\",\"GRGR_CAP_CONV_DT\",\"GRGR_RUNOUT_DT\",\"GRGR_RUNOUT_EXCD\",\"GRGR_TRANS_ACCEPT\",\"GRGR_ITS_CODE\",\"GRGR_AUTONUM_IND\",\"GRGR_CONT_EFF_DT\",\"GRGR_TERM_PREM_MOS\",\"GRGR_RNST_TYPE\",\"GRGR_RNST_VAL\",\"GRGR_LOCK_TOKEN\",\"ATXR_SOURCE_ID\",\"SYS_LAST_UPD_DTM\",\"SYS_USUS_ID\",\"SYS_DBUSER_ID\",\"SYS_BITMAP_NVL\",\"SYS_LAST_OFFSET_NVL\",\"GRGR_PUP_IND_NVL\") values ('7013','01','20001777','0','FAYDA ZAKARIA MD PC HMO','1711 MONROE ST',' ',' ','Dearborn','MI','48124','Wayne','USA','3135629100',' ',' ',' ',' ','None','None',' ',' ','AC',TO_TIMESTAMP('2019-02-01 00:00:00.000'),TO_TIMESTAMP('9999-12-31 00:00:00.000'),' ',' ',TO_TIMESTAMP('1753-01-01 00:00:00.000'),TO_TIMESTAMP('1753-01-01 00:00:00.000'),'201',TO_TIMESTAMP('9999-12-31 00:00:00.000'),TO_TIMESTAMP('9999-12-31 00:00:00.000'),TO_TIMESTAMP('9999-12-31 00:00:00.000'),' ',' ','Y',TO_TIMESTAMP('1753-01-01 00:00:00.000'),'0','S','12',TO_TIMESTAMP('1753-01-01 00:00:00.000'),'fayda za','dearborn','None',' ','0','0','0','0',' ',' ',' ','201',TO_TIMESTAMP('1753-01-01 00:00:00.000'),'N',TO_TIMESTAMP('1753-01-01 00:00:00.000'),TO_TIMESTAMP('9999-12-31 00:00:00.000'),' ',' ',' ','Y',TO_TIMESTAMP('1753-01-01 00:00:00.000'),'0','N','0','1',TO_TIMESTAMP('3423-01-01 00:44:56.680'),TO_TIMESTAMP('2020-09-26 09:48:17.000'),'FACETS','FACETS',NULL,NULL,'N');"},"SQL_UNDO":{"string":"delete from \"C##MYUSER\".\"CUSTOMERS\" where \"GRGR_CK\" = '7013' and \"CICI_ID\" = '01' and \"GRGR_ID\" = '20001777' and \"PAGR_CK\" = '0' and \"GRGR_NAME\" = 'FAYDA ZAKARIA MD PC HMO' and \"GRGR_ADDR1\" = '1711 MONROE ST' and \"GRGR_ADDR2\" = ' ' and \"GRGR_ADDR3\" = ' ' and \"GRGR_CITY\" = 'Dearborn' and \"GRGR_STATE\" = 'MI' and \"GRGR_ZIP\" = '48124' and \"GRGR_COUNTY\" = 'Wayne' and \"GRGR_CTRY_CD\" = 'USA' and \"GRGR_PHONE\" = '3135629100' and \"GRGR_PHONE_EXT\" = ' ' and \"GRGR_FAX\" = ' ' and \"GRGR_FAX_EXT\" = ' ' and \"GRGR_EMAIL\" = ' ' and \"GRGR_MCTR_TYPE\" = 'None' and \"GRGR_MCTR_VIP\" = 'None' and \"MCAR_AREA_ID\" = ' ' and \"CSCS_ID\" = ' ' and \"GRGR_STS\" = 'AC' and \"GRGR_ORIG_EFF_DT\" = TO_TIMESTAMP('2019-02-01 00:00:00.000') and \"GRGR_TERM_DT\" = TO_TIMESTAMP('9999-12-31 00:00:00.000') and \"GRGR_MCTR_TRSN\" = ' ' and \"EXCD_ID\" = ' ' and \"GRGR_RNST_DT\" = TO_TIMESTAMP('1753-01-01 00:00:00.000') and \"GRGR_CONV_DT\" = TO_TIMESTAMP('1753-01-01 00:00:00.000') and \"GRGR_RENEW_MMDD\" = '201' and \"GRGR_PREV_ANNV_DT\" = TO_TIMESTAMP('9999-12-31 00:00:00.000') and \"GRGR_CURR_ANNV_DT\" = TO_TIMESTAMP('9999-12-31 00:00:00.000') and \"GRGR_NEXT_ANNV_DT\" = TO_TIMESTAMP('9999-12-31 00:00:00.000') and \"GRGR_MCTR_PTYP\" = ' ' and \"GRGR_UNDW_USUS_ID\" = ' ' and \"GRGR_CAP_IND\" = 'Y' and \"GRGR_LAST_CAP_DT\" = TO_TIMESTAMP('1753-01-01 00:00:00.000') and \"GRGR_CAP_BAT_STS\" = '0' and \"GRGR_BILL_LEVEL\" = 'S' and \"GRGR_LMT_ADJ_MOS\" = '12' and \"GRGR_BL_CONV_DT\" = TO_TIMESTAMP('1753-01-01 00:00:00.000') and \"GRGR_NAME_XLOW\" = 'fayda za' and \"GRGR_CITY_XLOW\" = 'dearborn' and \"GRGR_MCTR_LANG\" = 'None' and \"GRGR_EXTN_ADDR_IND\" = ' ' and \"WMDS_SEQ_NO\" = '0' and \"GRGR_TOTAL_EMPL\" = '0' and \"GRGR_TOTAL_ELIG\" = '0' and \"GRGR_TOTAL_CONTR\" = '0' and \"GRGR_POL_NO\" = ' ' and \"CRCY_ID\" = ' ' and \"GRGR_EIN\" = ' ' and \"GRGR_ERIS_MMDD\" = '201' and \"GRGR_RECD_DT\" = TO_TIMESTAMP('1753-01-01 00:00:00.000') and \"GRGR_DEN_CHT_IND\" = 'N' and \"GRGR_CAP_CONV_DT\" = TO_TIMESTAMP('1753-01-01 00:00:00.000') and \"GRGR_RUNOUT_DT\" = TO_TIMESTAMP('9999-12-31 00:00:00.000') and \"GRGR_RUNOUT_EXCD\" = ' ' and \"GRGR_TRANS_ACCEPT\" = ' ' and \"GRGR_ITS_CODE\" = ' ' and \"GRGR_AUTONUM_IND\" = 'Y' and \"GRGR_CONT_EFF_DT\" = TO_TIMESTAMP('1753-01-01 00:00:00.000') and \"GRGR_TERM_PREM_MOS\" = '0' and \"GRGR_RNST_TYPE\" = 'N' and \"GRGR_RNST_VAL\" = '0' and \"GRGR_LOCK_TOKEN\" = '1' and \"ATXR_SOURCE_ID\" = TO_TIMESTAMP('3423-01-01 00:44:56.680') and \"SYS_LAST_UPD_DTM\" = TO_TIMESTAMP('2020-09-26 09:48:17.000') and \"SYS_USUS_ID\" = 'FACETS' and \"SYS_DBUSER_ID\" = 'FACETS' and \"SYS_BITMAP_NVL\" IS NULL and \"SYS_LAST_OFFSET_NVL\" IS NULL and \"GRGR_PUP_IND_NVL\" = 'N' and ROWID = 'AAAR32AAHAAAAFbAAA';"},"RS_ID":{"string":" 0x00000b.00000035.009c "},"SSN":{"long":0},"CSF":{"boolean":false},"INFO":null,"STATUS":{"int":0},"REDO_VALUE":{"long":70},"UNDO_VALUE":{"long":71},"SAFE_RESUME_SCN":{"long":0},"CSCN":{"long":2163160},"OBJECT_ID":null,"EDITION_NAME":null,"CLIENT_ID":null,"SRC_CON_NAME":{"string":"CDB$ROOT"},"SRC_CON_ID":{"long":1},"SRC_CON_UID":{"long":1},"SRC_CON_DBID":{"long":0},"SRC_CON_GUID":null,"CON_ID":{"boolean":false}}
+
+# With 1.3.2 SNAPSHOT
+
+# {
+#     "ATXR_SOURCE_ID": 45852223496680,
+#     "CICI_ID": "01",
+#     "CRCY_ID": " ",
+#     "CSCS_ID": " ",
+#     "EXCD_ID": " ",
+#     "GRGR_ADDR1": "1711 MONROE ST",
+#     "GRGR_ADDR2": " ",
+#     "GRGR_ADDR3": " ",
+#     "GRGR_AUTONUM_IND": "Y",
+#     "GRGR_BILL_LEVEL": "S",
+#     "GRGR_BL_CONV_DT": -6847804800000,
+#     "GRGR_CAP_BAT_STS": 0,
+#     "GRGR_CAP_CONV_DT": -6847804800000,
+#     "GRGR_CAP_IND": "Y",
+#     "GRGR_CITY": "Dearborn",
+#     "GRGR_CITY_XLOW": "dearborn",
+#     "GRGR_CK": 7013,
+#     "GRGR_CONT_EFF_DT": -6847804800000,
+#     "GRGR_CONV_DT": -6847804800000,
+#     "GRGR_COUNTY": "Wayne",
+#     "GRGR_CTRY_CD": "USA",
+#     "GRGR_CURR_ANNV_DT": 253402214400000,
+#     "GRGR_DEN_CHT_IND": "N",
+#     "GRGR_EIN": " ",
+#     "GRGR_EMAIL": " ",
+#     "GRGR_ERIS_MMDD": 201,
+#     "GRGR_EXTN_ADDR_IND": " ",
+#     "GRGR_FAX": " ",
+#     "GRGR_FAX_EXT": " ",
+#     "GRGR_ID": "20001777",
+#     "GRGR_ITS_CODE": " ",
+#     "GRGR_LAST_CAP_DT": -6847804800000,
+#     "GRGR_LMT_ADJ_MOS": 12,
+#     "GRGR_LOCK_TOKEN": 1,
+#     "GRGR_MCTR_LANG": "None",
+#     "GRGR_MCTR_PTYP": " ",
+#     "GRGR_MCTR_TRSN": " ",
+#     "GRGR_MCTR_TYPE": "None",
+#     "GRGR_MCTR_VIP": "None",
+#     "GRGR_NAME": "FAYDA ZAKARIA MD PC HMO",
+#     "GRGR_NAME_XLOW": "fayda za",
+#     "GRGR_NEXT_ANNV_DT": 253402214400000,
+#     "GRGR_ORIG_EFF_DT": 1548979200000,
+#     "GRGR_PHONE": "3135629100",
+#     "GRGR_PHONE_EXT": " ",
+#     "GRGR_POL_NO": " ",
+#     "GRGR_PREV_ANNV_DT": 253402214400000,
+#     "GRGR_PUP_IND_NVL": "N",
+#     "GRGR_RECD_DT": -6847804800000,
+#     "GRGR_RENEW_MMDD": 201,
+#     "GRGR_RNST_DT": -6847804800000,
+#     "GRGR_RNST_TYPE": "N",
+#     "GRGR_RNST_VAL": 0,
+#     "GRGR_RUNOUT_DT": 253402214400000,
+#     "GRGR_RUNOUT_EXCD": " ",
+#     "GRGR_STATE": "MI",
+#     "GRGR_STS": "AC",
+#     "GRGR_TERM_DT": 253402214400000,
+#     "GRGR_TERM_PREM_MOS": 0,
+#     "GRGR_TOTAL_CONTR": 0,
+#     "GRGR_TOTAL_ELIG": 0,
+#     "GRGR_TOTAL_EMPL": 0,
+#     "GRGR_TRANS_ACCEPT": " ",
+#     "GRGR_UNDW_USUS_ID": " ",
+#     "GRGR_ZIP": "48124",
+#     "MCAR_AREA_ID": " ",
+#     "PAGR_CK": 0,
+#     "SYS_BITMAP_NVL": null,
+#     "SYS_DBUSER_ID": {
+#         "string": "FACETS"
+#     },
+#     "SYS_LAST_OFFSET_NVL": null,
+#     "SYS_LAST_UPD_DTM": {
+#         "long": 1601113697000
+#     },
+#     "SYS_USUS_ID": {
+#         "string": "FACETS"
+#     },
+#     "WMDS_SEQ_NO": 0,
+#     "current_ts": {
+#         "string": "1638806499409"
+#     },
+#     "op_ts": {
+#         "string": "1638806458000"
+#     },
+#     "op_type": {
+#         "string": "I"
+#     },
+#     "row_id": {
+#         "string": "AAAR32AAHAAAAFfAAA"
+#     },
+#     "scn": {
+#         "string": "2161573"
+#     },
+#     "table": {
+#         "string": "ORCLCDB.C##MYUSER.CUSTOMERS"
+#     },
+#     "username": {
+#         "string": "C##MYUSER"
+#     }
+# }
+
+
+# {"SCN":{"long":2161573},"START_SCN":{"long":2161573},"COMMIT_SCN":{"long":2161574},"TIMESTAMP":{"long":1638806458000},"START_TIMESTAMP":{"long":1638806458000},"COMMIT_TIMESTAMP":{"long":1638806458000},"XIDUSN":{"long":10},"XIDSLT":{"long":11},"XIDSQN":{"long":855},"XID":{"bytes":"\n\u0000\u000B\u0000W\u0003\u0000\u0000"},"PXIDUSN":{"long":10},"PXIDSLT":{"long":11},"PXIDSQN":{"long":855},"PXID":{"bytes":"\n\u0000\u000B\u0000W\u0003\u0000\u0000"},"TX_NAME":null,"OPERATION":{"string":"INSERT"},"OPERATION_CODE":{"int":1},"ROLLBACK":{"boolean":false},"SEG_OWNER":{"string":"C##MYUSER"},"SEG_NAME":{"string":"CUSTOMERS"},"TABLE_NAME":{"string":"CUSTOMERS"},"SEG_TYPE":{"int":2},"SEG_TYPE_NAME":{"string":"TABLE"},"TABLE_SPACE":{"string":"USERS"},"ROW_ID":{"string":"AAAR32AAHAAAAFfAAA"},"USERNAME":{"string":"C##MYUSER"},"OS_USERNAME":{"string":"oracle"},"MACHINE_NAME":{"string":"oracle"},"AUDIT_SESSIONID":{"long":130003},"SESSION_NUM":{"long":8},"SERIAL_NUM":{"long":56036},"SESSION_INFO":{"string":"login_username=C##MYUSER client_info= OS_username=oracle Machine_name=oracle OS_terminal=pts/0 OS_process_id=532 OS_program_name=sqlplus@oracle (TNS V1-V3)"},"THREAD_NUM":{"long":1},"SEQUENCE_NUM":{"long":2},"RBASQN":{"long":7},"RBABLK":{"long":100909},"RBABYTE":{"long":156},"UBAFIL":{"long":4},"UBABLK":{"long":16777490},"UBAREC":{"long":38},"UBASQN":{"long":174},"ABS_FILE_NUM":{"long":7},"REL_FILE_NUM":{"long":7},"DATA_BLK_NUM":{"long":351},"DATA_OBJ_NUM":{"long":73206},"DATA_OBJV_NUM":{"long":69},"DATA_OBJD_NUM":{"long":73206},"SQL_REDO":{"string":"insert into \"C##MYUSER\".\"CUSTOMERS\"(\"GRGR_CK\",\"CICI_ID\",\"GRGR_ID\",\"PAGR_CK\",\"GRGR_NAME\",\"GRGR_ADDR1\",\"GRGR_ADDR2\",\"GRGR_ADDR3\",\"GRGR_CITY\",\"GRGR_STATE\",\"GRGR_ZIP\",\"GRGR_COUNTY\",\"GRGR_CTRY_CD\",\"GRGR_PHONE\",\"GRGR_PHONE_EXT\",\"GRGR_FAX\",\"GRGR_FAX_EXT\",\"GRGR_EMAIL\",\"GRGR_MCTR_TYPE\",\"GRGR_MCTR_VIP\",\"MCAR_AREA_ID\",\"CSCS_ID\",\"GRGR_STS\",\"GRGR_ORIG_EFF_DT\",\"GRGR_TERM_DT\",\"GRGR_MCTR_TRSN\",\"EXCD_ID\",\"GRGR_RNST_DT\",\"GRGR_CONV_DT\",\"GRGR_RENEW_MMDD\",\"GRGR_PREV_ANNV_DT\",\"GRGR_CURR_ANNV_DT\",\"GRGR_NEXT_ANNV_DT\",\"GRGR_MCTR_PTYP\",\"GRGR_UNDW_USUS_ID\",\"GRGR_CAP_IND\",\"GRGR_LAST_CAP_DT\",\"GRGR_CAP_BAT_STS\",\"GRGR_BILL_LEVEL\",\"GRGR_LMT_ADJ_MOS\",\"GRGR_BL_CONV_DT\",\"GRGR_NAME_XLOW\",\"GRGR_CITY_XLOW\",\"GRGR_MCTR_LANG\",\"GRGR_EXTN_ADDR_IND\",\"WMDS_SEQ_NO\",\"GRGR_TOTAL_EMPL\",\"GRGR_TOTAL_ELIG\",\"GRGR_TOTAL_CONTR\",\"GRGR_POL_NO\",\"CRCY_ID\",\"GRGR_EIN\",\"GRGR_ERIS_MMDD\",\"GRGR_RECD_DT\",\"GRGR_DEN_CHT_IND\",\"GRGR_CAP_CONV_DT\",\"GRGR_RUNOUT_DT\",\"GRGR_RUNOUT_EXCD\",\"GRGR_TRANS_ACCEPT\",\"GRGR_ITS_CODE\",\"GRGR_AUTONUM_IND\",\"GRGR_CONT_EFF_DT\",\"GRGR_TERM_PREM_MOS\",\"GRGR_RNST_TYPE\",\"GRGR_RNST_VAL\",\"GRGR_LOCK_TOKEN\",\"ATXR_SOURCE_ID\",\"SYS_LAST_UPD_DTM\",\"SYS_USUS_ID\",\"SYS_DBUSER_ID\",\"SYS_BITMAP_NVL\",\"SYS_LAST_OFFSET_NVL\",\"GRGR_PUP_IND_NVL\") values ('7013','01','20001777','0','FAYDA ZAKARIA MD PC HMO','1711 MONROE ST',' ',' ','Dearborn','MI','48124','Wayne','USA','3135629100',' ',' ',' ',' ','None','None',' ',' ','AC',TO_TIMESTAMP('2019-02-01 00:00:00.000'),TO_TIMESTAMP('9999-12-31 00:00:00.000'),' ',' ',TO_TIMESTAMP('1753-01-01 00:00:00.000'),TO_TIMESTAMP('1753-01-01 00:00:00.000'),'201',TO_TIMESTAMP('9999-12-31 00:00:00.000'),TO_TIMESTAMP('9999-12-31 00:00:00.000'),TO_TIMESTAMP('9999-12-31 00:00:00.000'),' ',' ','Y',TO_TIMESTAMP('1753-01-01 00:00:00.000'),'0','S','12',TO_TIMESTAMP('1753-01-01 00:00:00.000'),'fayda za','dearborn','None',' ','0','0','0','0',' ',' ',' ','201',TO_TIMESTAMP('1753-01-01 00:00:00.000'),'N',TO_TIMESTAMP('1753-01-01 00:00:00.000'),TO_TIMESTAMP('9999-12-31 00:00:00.000'),' ',' ',' ','Y',TO_TIMESTAMP('1753-01-01 00:00:00.000'),'0','N','0','1',TO_TIMESTAMP('3423-01-01 00:44:56.680'),TO_TIMESTAMP('2020-09-26 09:48:17.000'),'FACETS','FACETS',NULL,NULL,'N');"},"SQL_UNDO":{"string":"delete from \"C##MYUSER\".\"CUSTOMERS\" where \"GRGR_CK\" = '7013' and \"CICI_ID\" = '01' and \"GRGR_ID\" = '20001777' and \"PAGR_CK\" = '0' and \"GRGR_NAME\" = 'FAYDA ZAKARIA MD PC HMO' and \"GRGR_ADDR1\" = '1711 MONROE ST' and \"GRGR_ADDR2\" = ' ' and \"GRGR_ADDR3\" = ' ' and \"GRGR_CITY\" = 'Dearborn' and \"GRGR_STATE\" = 'MI' and \"GRGR_ZIP\" = '48124' and \"GRGR_COUNTY\" = 'Wayne' and \"GRGR_CTRY_CD\" = 'USA' and \"GRGR_PHONE\" = '3135629100' and \"GRGR_PHONE_EXT\" = ' ' and \"GRGR_FAX\" = ' ' and \"GRGR_FAX_EXT\" = ' ' and \"GRGR_EMAIL\" = ' ' and \"GRGR_MCTR_TYPE\" = 'None' and \"GRGR_MCTR_VIP\" = 'None' and \"MCAR_AREA_ID\" = ' ' and \"CSCS_ID\" = ' ' and \"GRGR_STS\" = 'AC' and \"GRGR_ORIG_EFF_DT\" = TO_TIMESTAMP('2019-02-01 00:00:00.000') and \"GRGR_TERM_DT\" = TO_TIMESTAMP('9999-12-31 00:00:00.000') and \"GRGR_MCTR_TRSN\" = ' ' and \"EXCD_ID\" = ' ' and \"GRGR_RNST_DT\" = TO_TIMESTAMP('1753-01-01 00:00:00.000') and \"GRGR_CONV_DT\" = TO_TIMESTAMP('1753-01-01 00:00:00.000') and \"GRGR_RENEW_MMDD\" = '201' and \"GRGR_PREV_ANNV_DT\" = TO_TIMESTAMP('9999-12-31 00:00:00.000') and \"GRGR_CURR_ANNV_DT\" = TO_TIMESTAMP('9999-12-31 00:00:00.000') and \"GRGR_NEXT_ANNV_DT\" = TO_TIMESTAMP('9999-12-31 00:00:00.000') and \"GRGR_MCTR_PTYP\" = ' ' and \"GRGR_UNDW_USUS_ID\" = ' ' and \"GRGR_CAP_IND\" = 'Y' and \"GRGR_LAST_CAP_DT\" = TO_TIMESTAMP('1753-01-01 00:00:00.000') and \"GRGR_CAP_BAT_STS\" = '0' and \"GRGR_BILL_LEVEL\" = 'S' and \"GRGR_LMT_ADJ_MOS\" = '12' and \"GRGR_BL_CONV_DT\" = TO_TIMESTAMP('1753-01-01 00:00:00.000') and \"GRGR_NAME_XLOW\" = 'fayda za' and \"GRGR_CITY_XLOW\" = 'dearborn' and \"GRGR_MCTR_LANG\" = 'None' and \"GRGR_EXTN_ADDR_IND\" = ' ' and \"WMDS_SEQ_NO\" = '0' and \"GRGR_TOTAL_EMPL\" = '0' and \"GRGR_TOTAL_ELIG\" = '0' and \"GRGR_TOTAL_CONTR\" = '0' and \"GRGR_POL_NO\" = ' ' and \"CRCY_ID\" = ' ' and \"GRGR_EIN\" = ' ' and \"GRGR_ERIS_MMDD\" = '201' and \"GRGR_RECD_DT\" = TO_TIMESTAMP('1753-01-01 00:00:00.000') and \"GRGR_DEN_CHT_IND\" = 'N' and \"GRGR_CAP_CONV_DT\" = TO_TIMESTAMP('1753-01-01 00:00:00.000') and \"GRGR_RUNOUT_DT\" = TO_TIMESTAMP('9999-12-31 00:00:00.000') and \"GRGR_RUNOUT_EXCD\" = ' ' and \"GRGR_TRANS_ACCEPT\" = ' ' and \"GRGR_ITS_CODE\" = ' ' and \"GRGR_AUTONUM_IND\" = 'Y' and \"GRGR_CONT_EFF_DT\" = TO_TIMESTAMP('1753-01-01 00:00:00.000') and \"GRGR_TERM_PREM_MOS\" = '0' and \"GRGR_RNST_TYPE\" = 'N' and \"GRGR_RNST_VAL\" = '0' and \"GRGR_LOCK_TOKEN\" = '1' and \"ATXR_SOURCE_ID\" = TO_TIMESTAMP('3423-01-01 00:44:56.680') and \"SYS_LAST_UPD_DTM\" = TO_TIMESTAMP('2020-09-26 09:48:17.000') and \"SYS_USUS_ID\" = 'FACETS' and \"SYS_DBUSER_ID\" = 'FACETS' and \"SYS_BITMAP_NVL\" IS NULL and \"SYS_LAST_OFFSET_NVL\" IS NULL and \"GRGR_PUP_IND_NVL\" = 'N' and ROWID = 'AAAR32AAHAAAAFfAAA';"},"RS_ID":{"string":" 0x000007.00018a2d.009c "},"SSN":{"long":0},"CSF":{"boolean":false},"INFO":null,"STATUS":{"int":0},"REDO_VALUE":{"long":656436},"UNDO_VALUE":{"long":656437},"SAFE_RESUME_SCN":{"long":0},"CSCN":{"long":2161574},"OBJECT_ID":null,"EDITION_NAME":null,"CLIENT_ID":null,"SRC_CON_NAME":{"string":"CDB$ROOT"},"SRC_CON_ID":{"long":1},"SRC_CON_UID":{"long":1},"SRC_CON_DBID":{"long":0},"SRC_CON_GUID":null,"CON_ID":{"boolean":false}}
