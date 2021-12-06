@@ -13,7 +13,8 @@ sqlplus C\#\#MYUSER/mypassword@//localhost:1521/ORCLCDB  <<- EOF
           club_status VARCHAR(20),
           comments VARCHAR(90),
           create_ts timestamp DEFAULT CURRENT_TIMESTAMP ,
-          update_ts timestamp
+          update_ts timestamp,
+          my_timestamp timestamp
   );
 
   CREATE OR REPLACE TRIGGER TRG_CUSTOMERS_UPD
