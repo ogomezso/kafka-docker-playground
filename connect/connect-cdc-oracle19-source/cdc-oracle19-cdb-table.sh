@@ -83,9 +83,9 @@ cat /tmp/result.log
 log "Verifying topic redo-log-topic: there should be 2 records"
 timeout 60 docker exec connect kafka-avro-console-consumer -bootstrap-server broker:9092 --property schema.registry.url=http://schema-registry:8081 --topic redo-log-topic --from-beginning --max-messages 1
 
-# results with 1.4.0 (ATXR_SOURCE_ID is same, i.e 45852223496680)
+# results with 1.4.0 (ATXR_SOURCE_ID is same, i.e -6847787038000)
 # {
-#     "ATXR_SOURCE_ID": 45852223496680,
+#     "ATXR_SOURCE_ID": -6847787038000,
 #     "CICI_ID": "01",
 #     "CRCY_ID": " ",
 #     "CSCS_ID": " ",
@@ -184,7 +184,7 @@ timeout 60 docker exec connect kafka-avro-console-consumer -bootstrap-server bro
 # and update:
 
 # {
-#     "ATXR_SOURCE_ID": 45852223496680,
+#     "ATXR_SOURCE_ID": -6847787038000,
 #     "CICI_ID": "01",
 #     "CRCY_ID": " ",
 #     "CSCS_ID": " ",
@@ -287,9 +287,9 @@ timeout 60 docker exec connect kafka-avro-console-consumer -bootstrap-server bro
 # }
 
 
-# results with confluentinc-kafka-connect-oracle-cdc-1.3.2-SNAPSHOT.zip (ATXR_SOURCE_ID is same, i.e 45852223496680)
+# results with confluentinc-kafka-connect-oracle-cdc-1.3.2-SNAPSHOT.zip (ATXR_SOURCE_ID is same, i.e -6847787038000)
 # {
-#     "ATXR_SOURCE_ID": 45852223496680,
+#     "ATXR_SOURCE_ID": -6847804800000,
 #     "CICI_ID": "01",
 #     "CRCY_ID": " ",
 #     "CSCS_ID": " ",
@@ -369,7 +369,7 @@ timeout 60 docker exec connect kafka-avro-console-consumer -bootstrap-server bro
 #     },
 #     "WMDS_SEQ_NO": 0,
 #     "current_ts": {
-#         "string": "1639669127584"
+#         "string": "1639669685533"
 #     },
 #     "op_ts": null,
 #     "op_type": {
@@ -377,7 +377,7 @@ timeout 60 docker exec connect kafka-avro-console-consumer -bootstrap-server bro
 #     },
 #     "row_id": null,
 #     "scn": {
-#         "string": "2160559"
+#         "string": "2160755"
 #     },
 #     "table": {
 #         "string": "ORCLCDB.C##MYUSER.CUSTOMERS"
@@ -385,8 +385,10 @@ timeout 60 docker exec connect kafka-avro-console-consumer -bootstrap-server bro
 #     "username": null
 # }
 
+# UPDATE:
+
 # {
-#     "ATXR_SOURCE_ID": 45852223496680,
+#     "ATXR_SOURCE_ID": -6847804800000,
 #     "CICI_ID": "01",
 #     "CRCY_ID": " ",
 #     "CSCS_ID": " ",
@@ -466,19 +468,19 @@ timeout 60 docker exec connect kafka-avro-console-consumer -bootstrap-server bro
 #     },
 #     "WMDS_SEQ_NO": 0,
 #     "current_ts": {
-#         "string": "1639669218968"
+#         "string": "1639669775645"
 #     },
 #     "op_ts": {
-#         "string": "1639669178000"
+#         "string": "1639669735000"
 #     },
 #     "op_type": {
 #         "string": "U"
 #     },
 #     "row_id": {
-#         "string": "AAAR32AAHAAAAFeAAA"
+#         "string": "AAAR32AAHAAAAFdAAA"
 #     },
 #     "scn": {
-#         "string": "2161384"
+#         "string": "2161573"
 #     },
 #     "table": {
 #         "string": "ORCLCDB.C##MYUSER.CUSTOMERS"
