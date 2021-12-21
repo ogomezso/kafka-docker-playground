@@ -88,7 +88,7 @@ set -e
 log "Verifying topic redo-log-topic: there should be 1 record"
 timeout 60 docker exec connect kafka-avro-console-consumer -bootstrap-server broker:9092 --property schema.registry.url=http://schema-registry:8081 --topic redo-log-topic --from-beginning --max-messages 1
 
-# results with 1.5.0 (ATXR_SOURCE_ID is same )
+# results with 1.5.0 (ATXR_SOURCE_ID is same -6847804800000)
 # results with 1.4.0 (ATXR_SOURCE_ID is not same, i.e -6847786800000 and -6847787038000)
 # {
 #     "ATXR_SOURCE_ID": -6847786800000,
