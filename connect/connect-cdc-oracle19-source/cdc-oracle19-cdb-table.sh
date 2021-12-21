@@ -80,12 +80,18 @@ timeout 60 docker exec connect kafka-avro-console-consumer -bootstrap-server bro
 set -e
 cat /tmp/result.log
 
-log "Verifying topic redo-log-topic: there should be 2 records"
+set +e
+log "Checking problematic field ATXR_SOURCE_ID, if it is different, problem is reproduced"
+cat /tmp/result.log | jq .ATXR_SOURCE_ID
+set -e
+
+log "Verifying topic redo-log-topic: there should be 1 record"
 timeout 60 docker exec connect kafka-avro-console-consumer -bootstrap-server broker:9092 --property schema.registry.url=http://schema-registry:8081 --topic redo-log-topic --from-beginning --max-messages 1
 
-# results with 1.4.0 (ATXR_SOURCE_ID is same, i.e -6847787038000)
+# results with 1.5.0 (ATXR_SOURCE_ID is same )
+# results with 1.4.0 (ATXR_SOURCE_ID is not same, i.e -6847786800000 and -6847787038000)
 # {
-#     "ATXR_SOURCE_ID": -6847787038000,
+#     "ATXR_SOURCE_ID": -6847786800000,
 #     "CICI_ID": "01",
 #     "CRCY_ID": " ",
 #     "CSCS_ID": " ",
@@ -95,18 +101,18 @@ timeout 60 docker exec connect kafka-avro-console-consumer -bootstrap-server bro
 #     "GRGR_ADDR3": " ",
 #     "GRGR_AUTONUM_IND": "Y",
 #     "GRGR_BILL_LEVEL": "S",
-#     "GRGR_BL_CONV_DT": -6847804800000,
+#     "GRGR_BL_CONV_DT": -6847786800000,
 #     "GRGR_CAP_BAT_STS": 0,
-#     "GRGR_CAP_CONV_DT": -6847804800000,
+#     "GRGR_CAP_CONV_DT": -6847786800000,
 #     "GRGR_CAP_IND": "Y",
 #     "GRGR_CITY": "Dearborn",
 #     "GRGR_CITY_XLOW": "dearborn",
 #     "GRGR_CK": 1,
-#     "GRGR_CONT_EFF_DT": -6847804800000,
-#     "GRGR_CONV_DT": -6847804800000,
+#     "GRGR_CONT_EFF_DT": -6847786800000,
+#     "GRGR_CONV_DT": -6847786800000,
 #     "GRGR_COUNTY": "Wayne",
 #     "GRGR_CTRY_CD": "USA",
-#     "GRGR_CURR_ANNV_DT": 253402214400000,
+#     "GRGR_CURR_ANNV_DT": 253402232400000,
 #     "GRGR_DEN_CHT_IND": "N",
 #     "GRGR_EIN": " ",
 #     "GRGR_EMAIL": " ",
@@ -116,7 +122,7 @@ timeout 60 docker exec connect kafka-avro-console-consumer -bootstrap-server bro
 #     "GRGR_FAX_EXT": " ",
 #     "GRGR_ID": "20001777",
 #     "GRGR_ITS_CODE": " ",
-#     "GRGR_LAST_CAP_DT": -6847804800000,
+#     "GRGR_LAST_CAP_DT": -6847786800000,
 #     "GRGR_LMT_ADJ_MOS": 12,
 #     "GRGR_LOCK_TOKEN": 1,
 #     "GRGR_MCTR_LANG": "None",
@@ -126,23 +132,23 @@ timeout 60 docker exec connect kafka-avro-console-consumer -bootstrap-server bro
 #     "GRGR_MCTR_VIP": "None",
 #     "GRGR_NAME": "VINCENT 1ST INSERT",
 #     "GRGR_NAME_XLOW": "fayda za",
-#     "GRGR_NEXT_ANNV_DT": 253402214400000,
-#     "GRGR_ORIG_EFF_DT": 1548979200000,
+#     "GRGR_NEXT_ANNV_DT": 253402232400000,
+#     "GRGR_ORIG_EFF_DT": 1548997200000,
 #     "GRGR_PHONE": "3135629100",
 #     "GRGR_PHONE_EXT": " ",
 #     "GRGR_POL_NO": " ",
-#     "GRGR_PREV_ANNV_DT": 253402214400000,
+#     "GRGR_PREV_ANNV_DT": 253402232400000,
 #     "GRGR_PUP_IND_NVL": "N",
-#     "GRGR_RECD_DT": -6847804800000,
+#     "GRGR_RECD_DT": -6847786800000,
 #     "GRGR_RENEW_MMDD": 201,
-#     "GRGR_RNST_DT": -6847804800000,
+#     "GRGR_RNST_DT": -6847786800000,
 #     "GRGR_RNST_TYPE": "N",
 #     "GRGR_RNST_VAL": 0,
-#     "GRGR_RUNOUT_DT": 253402214400000,
+#     "GRGR_RUNOUT_DT": 253402232400000,
 #     "GRGR_RUNOUT_EXCD": " ",
 #     "GRGR_STATE": "MI",
 #     "GRGR_STS": "AC",
-#     "GRGR_TERM_DT": 253402214400000,
+#     "GRGR_TERM_DT": 253402232400000,
 #     "GRGR_TERM_PREM_MOS": 0,
 #     "GRGR_TOTAL_CONTR": 0,
 #     "GRGR_TOTAL_ELIG": 0,
@@ -158,14 +164,14 @@ timeout 60 docker exec connect kafka-avro-console-consumer -bootstrap-server bro
 #     },
 #     "SYS_LAST_OFFSET_NVL": null,
 #     "SYS_LAST_UPD_DTM": {
-#         "long": 1601113697000
+#         "long": 1601128097000
 #     },
 #     "SYS_USUS_ID": {
 #         "string": "FACETS"
 #     },
 #     "WMDS_SEQ_NO": 0,
 #     "current_ts": {
-#         "string": "1639668212708"
+#         "string": "1640081964882"
 #     },
 #     "op_ts": null,
 #     "op_type": {
@@ -173,13 +179,14 @@ timeout 60 docker exec connect kafka-avro-console-consumer -bootstrap-server bro
 #     },
 #     "row_id": null,
 #     "scn": {
-#         "string": "2160741"
+#         "string": "2160358"
 #     },
 #     "table": {
 #         "string": "ORCLCDB.C##MYUSER.CUSTOMERS"
 #     },
 #     "username": null
 # }
+
 
 # and update:
 
@@ -194,18 +201,18 @@ timeout 60 docker exec connect kafka-avro-console-consumer -bootstrap-server bro
 #     "GRGR_ADDR3": " ",
 #     "GRGR_AUTONUM_IND": "Y",
 #     "GRGR_BILL_LEVEL": "S",
-#     "GRGR_BL_CONV_DT": -6847804800000,
+#     "GRGR_BL_CONV_DT": -6847787038000,
 #     "GRGR_CAP_BAT_STS": 0,
-#     "GRGR_CAP_CONV_DT": -6847804800000,
+#     "GRGR_CAP_CONV_DT": -6847787038000,
 #     "GRGR_CAP_IND": "Y",
 #     "GRGR_CITY": "Dearborn",
 #     "GRGR_CITY_XLOW": "dearborn",
 #     "GRGR_CK": 1,
-#     "GRGR_CONT_EFF_DT": -6847804800000,
-#     "GRGR_CONV_DT": -6847804800000,
+#     "GRGR_CONT_EFF_DT": -6847787038000,
+#     "GRGR_CONV_DT": -6847787038000,
 #     "GRGR_COUNTY": "Wayne",
 #     "GRGR_CTRY_CD": "USA",
-#     "GRGR_CURR_ANNV_DT": 253402214400000,
+#     "GRGR_CURR_ANNV_DT": 253402232400000,
 #     "GRGR_DEN_CHT_IND": "N",
 #     "GRGR_EIN": " ",
 #     "GRGR_EMAIL": " ",
@@ -215,7 +222,7 @@ timeout 60 docker exec connect kafka-avro-console-consumer -bootstrap-server bro
 #     "GRGR_FAX_EXT": " ",
 #     "GRGR_ID": "20001777",
 #     "GRGR_ITS_CODE": " ",
-#     "GRGR_LAST_CAP_DT": -6847804800000,
+#     "GRGR_LAST_CAP_DT": -6847787038000,
 #     "GRGR_LMT_ADJ_MOS": 12,
 #     "GRGR_LOCK_TOKEN": 1,
 #     "GRGR_MCTR_LANG": "None",
@@ -225,23 +232,23 @@ timeout 60 docker exec connect kafka-avro-console-consumer -bootstrap-server bro
 #     "GRGR_MCTR_VIP": "None",
 #     "GRGR_NAME": "VINCENT HAS UPDATED GRGR_NAME",
 #     "GRGR_NAME_XLOW": "fayda za",
-#     "GRGR_NEXT_ANNV_DT": 253402214400000,
-#     "GRGR_ORIG_EFF_DT": 1548979200000,
+#     "GRGR_NEXT_ANNV_DT": 253402232400000,
+#     "GRGR_ORIG_EFF_DT": 1548997200000,
 #     "GRGR_PHONE": "3135629100",
 #     "GRGR_PHONE_EXT": " ",
 #     "GRGR_POL_NO": " ",
-#     "GRGR_PREV_ANNV_DT": 253402214400000,
+#     "GRGR_PREV_ANNV_DT": 253402232400000,
 #     "GRGR_PUP_IND_NVL": "N",
-#     "GRGR_RECD_DT": -6847804800000,
+#     "GRGR_RECD_DT": -6847787038000,
 #     "GRGR_RENEW_MMDD": 201,
-#     "GRGR_RNST_DT": -6847804800000,
+#     "GRGR_RNST_DT": -6847787038000,
 #     "GRGR_RNST_TYPE": "N",
 #     "GRGR_RNST_VAL": 0,
-#     "GRGR_RUNOUT_DT": 253402214400000,
+#     "GRGR_RUNOUT_DT": 253402232400000,
 #     "GRGR_RUNOUT_EXCD": " ",
 #     "GRGR_STATE": "MI",
 #     "GRGR_STS": "AC",
-#     "GRGR_TERM_DT": 253402214400000,
+#     "GRGR_TERM_DT": 253402232400000,
 #     "GRGR_TERM_PREM_MOS": 0,
 #     "GRGR_TOTAL_CONTR": 0,
 #     "GRGR_TOTAL_ELIG": 0,
@@ -257,17 +264,17 @@ timeout 60 docker exec connect kafka-avro-console-consumer -bootstrap-server bro
 #     },
 #     "SYS_LAST_OFFSET_NVL": null,
 #     "SYS_LAST_UPD_DTM": {
-#         "long": 1601113697000
+#         "long": 1601128097000
 #     },
 #     "SYS_USUS_ID": {
 #         "string": "FACETS"
 #     },
 #     "WMDS_SEQ_NO": 0,
 #     "current_ts": {
-#         "string": "1639668269071"
+#         "string": "1640082021156"
 #     },
 #     "op_ts": {
-#         "string": "1639668263000"
+#         "string": "1640082016000"
 #     },
 #     "op_type": {
 #         "string": "U"
@@ -276,211 +283,7 @@ timeout 60 docker exec connect kafka-avro-console-consumer -bootstrap-server bro
 #         "string": "AAAR32AAHAAAAFeAAA"
 #     },
 #     "scn": {
-#         "string": "2161125"
-#     },
-#     "table": {
-#         "string": "ORCLCDB.C##MYUSER.CUSTOMERS"
-#     },
-#     "username": {
-#         "string": "C##MYUSER"
-#     }
-# }
-
-
-# results with confluentinc-kafka-connect-oracle-cdc-1.3.2-SNAPSHOT.zip (ATXR_SOURCE_ID is same, i.e -6847787038000)
-# {
-#     "ATXR_SOURCE_ID": -6847804800000,
-#     "CICI_ID": "01",
-#     "CRCY_ID": " ",
-#     "CSCS_ID": " ",
-#     "EXCD_ID": " ",
-#     "GRGR_ADDR1": "VINCENT",
-#     "GRGR_ADDR2": " ",
-#     "GRGR_ADDR3": " ",
-#     "GRGR_AUTONUM_IND": "Y",
-#     "GRGR_BILL_LEVEL": "S",
-#     "GRGR_BL_CONV_DT": -6847804800000,
-#     "GRGR_CAP_BAT_STS": 0,
-#     "GRGR_CAP_CONV_DT": -6847804800000,
-#     "GRGR_CAP_IND": "Y",
-#     "GRGR_CITY": "Dearborn",
-#     "GRGR_CITY_XLOW": "dearborn",
-#     "GRGR_CK": 1,
-#     "GRGR_CONT_EFF_DT": -6847804800000,
-#     "GRGR_CONV_DT": -6847804800000,
-#     "GRGR_COUNTY": "Wayne",
-#     "GRGR_CTRY_CD": "USA",
-#     "GRGR_CURR_ANNV_DT": 253402214400000,
-#     "GRGR_DEN_CHT_IND": "N",
-#     "GRGR_EIN": " ",
-#     "GRGR_EMAIL": " ",
-#     "GRGR_ERIS_MMDD": 201,
-#     "GRGR_EXTN_ADDR_IND": " ",
-#     "GRGR_FAX": " ",
-#     "GRGR_FAX_EXT": " ",
-#     "GRGR_ID": "20001777",
-#     "GRGR_ITS_CODE": " ",
-#     "GRGR_LAST_CAP_DT": -6847804800000,
-#     "GRGR_LMT_ADJ_MOS": 12,
-#     "GRGR_LOCK_TOKEN": 1,
-#     "GRGR_MCTR_LANG": "None",
-#     "GRGR_MCTR_PTYP": " ",
-#     "GRGR_MCTR_TRSN": " ",
-#     "GRGR_MCTR_TYPE": "None",
-#     "GRGR_MCTR_VIP": "None",
-#     "GRGR_NAME": "VINCENT 1ST INSERT",
-#     "GRGR_NAME_XLOW": "fayda za",
-#     "GRGR_NEXT_ANNV_DT": 253402214400000,
-#     "GRGR_ORIG_EFF_DT": 1548979200000,
-#     "GRGR_PHONE": "3135629100",
-#     "GRGR_PHONE_EXT": " ",
-#     "GRGR_POL_NO": " ",
-#     "GRGR_PREV_ANNV_DT": 253402214400000,
-#     "GRGR_PUP_IND_NVL": "N",
-#     "GRGR_RECD_DT": -6847804800000,
-#     "GRGR_RENEW_MMDD": 201,
-#     "GRGR_RNST_DT": -6847804800000,
-#     "GRGR_RNST_TYPE": "N",
-#     "GRGR_RNST_VAL": 0,
-#     "GRGR_RUNOUT_DT": 253402214400000,
-#     "GRGR_RUNOUT_EXCD": " ",
-#     "GRGR_STATE": "MI",
-#     "GRGR_STS": "AC",
-#     "GRGR_TERM_DT": 253402214400000,
-#     "GRGR_TERM_PREM_MOS": 0,
-#     "GRGR_TOTAL_CONTR": 0,
-#     "GRGR_TOTAL_ELIG": 0,
-#     "GRGR_TOTAL_EMPL": 0,
-#     "GRGR_TRANS_ACCEPT": " ",
-#     "GRGR_UNDW_USUS_ID": " ",
-#     "GRGR_ZIP": "48124",
-#     "MCAR_AREA_ID": " ",
-#     "PAGR_CK": 0,
-#     "SYS_BITMAP_NVL": null,
-#     "SYS_DBUSER_ID": {
-#         "string": "FACETS"
-#     },
-#     "SYS_LAST_OFFSET_NVL": null,
-#     "SYS_LAST_UPD_DTM": {
-#         "long": 1601113697000
-#     },
-#     "SYS_USUS_ID": {
-#         "string": "FACETS"
-#     },
-#     "WMDS_SEQ_NO": 0,
-#     "current_ts": {
-#         "string": "1639669685533"
-#     },
-#     "op_ts": null,
-#     "op_type": {
-#         "string": "R"
-#     },
-#     "row_id": null,
-#     "scn": {
-#         "string": "2160755"
-#     },
-#     "table": {
-#         "string": "ORCLCDB.C##MYUSER.CUSTOMERS"
-#     },
-#     "username": null
-# }
-
-# UPDATE:
-
-# {
-#     "ATXR_SOURCE_ID": -6847804800000,
-#     "CICI_ID": "01",
-#     "CRCY_ID": " ",
-#     "CSCS_ID": " ",
-#     "EXCD_ID": " ",
-#     "GRGR_ADDR1": "VINCENT",
-#     "GRGR_ADDR2": " ",
-#     "GRGR_ADDR3": " ",
-#     "GRGR_AUTONUM_IND": "Y",
-#     "GRGR_BILL_LEVEL": "S",
-#     "GRGR_BL_CONV_DT": -6847804800000,
-#     "GRGR_CAP_BAT_STS": 0,
-#     "GRGR_CAP_CONV_DT": -6847804800000,
-#     "GRGR_CAP_IND": "Y",
-#     "GRGR_CITY": "Dearborn",
-#     "GRGR_CITY_XLOW": "dearborn",
-#     "GRGR_CK": 1,
-#     "GRGR_CONT_EFF_DT": -6847804800000,
-#     "GRGR_CONV_DT": -6847804800000,
-#     "GRGR_COUNTY": "Wayne",
-#     "GRGR_CTRY_CD": "USA",
-#     "GRGR_CURR_ANNV_DT": 253402214400000,
-#     "GRGR_DEN_CHT_IND": "N",
-#     "GRGR_EIN": " ",
-#     "GRGR_EMAIL": " ",
-#     "GRGR_ERIS_MMDD": 201,
-#     "GRGR_EXTN_ADDR_IND": " ",
-#     "GRGR_FAX": " ",
-#     "GRGR_FAX_EXT": " ",
-#     "GRGR_ID": "20001777",
-#     "GRGR_ITS_CODE": " ",
-#     "GRGR_LAST_CAP_DT": -6847804800000,
-#     "GRGR_LMT_ADJ_MOS": 12,
-#     "GRGR_LOCK_TOKEN": 1,
-#     "GRGR_MCTR_LANG": "None",
-#     "GRGR_MCTR_PTYP": " ",
-#     "GRGR_MCTR_TRSN": " ",
-#     "GRGR_MCTR_TYPE": "None",
-#     "GRGR_MCTR_VIP": "None",
-#     "GRGR_NAME": "VINCENT HAS UPDATED GRGR_NAME",
-#     "GRGR_NAME_XLOW": "fayda za",
-#     "GRGR_NEXT_ANNV_DT": 253402214400000,
-#     "GRGR_ORIG_EFF_DT": 1548979200000,
-#     "GRGR_PHONE": "3135629100",
-#     "GRGR_PHONE_EXT": " ",
-#     "GRGR_POL_NO": " ",
-#     "GRGR_PREV_ANNV_DT": 253402214400000,
-#     "GRGR_PUP_IND_NVL": "N",
-#     "GRGR_RECD_DT": -6847804800000,
-#     "GRGR_RENEW_MMDD": 201,
-#     "GRGR_RNST_DT": -6847804800000,
-#     "GRGR_RNST_TYPE": "N",
-#     "GRGR_RNST_VAL": 0,
-#     "GRGR_RUNOUT_DT": 253402214400000,
-#     "GRGR_RUNOUT_EXCD": " ",
-#     "GRGR_STATE": "MI",
-#     "GRGR_STS": "AC",
-#     "GRGR_TERM_DT": 253402214400000,
-#     "GRGR_TERM_PREM_MOS": 0,
-#     "GRGR_TOTAL_CONTR": 0,
-#     "GRGR_TOTAL_ELIG": 0,
-#     "GRGR_TOTAL_EMPL": 0,
-#     "GRGR_TRANS_ACCEPT": " ",
-#     "GRGR_UNDW_USUS_ID": " ",
-#     "GRGR_ZIP": "48124",
-#     "MCAR_AREA_ID": " ",
-#     "PAGR_CK": 0,
-#     "SYS_BITMAP_NVL": null,
-#     "SYS_DBUSER_ID": {
-#         "string": "FACETS"
-#     },
-#     "SYS_LAST_OFFSET_NVL": null,
-#     "SYS_LAST_UPD_DTM": {
-#         "long": 1601113697000
-#     },
-#     "SYS_USUS_ID": {
-#         "string": "FACETS"
-#     },
-#     "WMDS_SEQ_NO": 0,
-#     "current_ts": {
-#         "string": "1639669775645"
-#     },
-#     "op_ts": {
-#         "string": "1639669735000"
-#     },
-#     "op_type": {
-#         "string": "U"
-#     },
-#     "row_id": {
-#         "string": "AAAR32AAHAAAAFdAAA"
-#     },
-#     "scn": {
-#         "string": "2161573"
+#         "string": "2160633"
 #     },
 #     "table": {
 #         "string": "ORCLCDB.C##MYUSER.CUSTOMERS"

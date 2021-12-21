@@ -23,3 +23,4 @@ services:
       - oracle
     environment:
       CONNECT_PLUGIN_PATH: /usr/share/confluent-hub-components/confluentinc-kafka-connect-oracle-cdc
+      TZ: America/New_York
