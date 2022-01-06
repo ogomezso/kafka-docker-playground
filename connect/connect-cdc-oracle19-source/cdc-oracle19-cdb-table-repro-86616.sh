@@ -59,11 +59,7 @@ curl -X PUT \
                "numeric.mapping": "best_fit",
                "connection.pool.max.size": 20,
                "redo.log.row.fetch.size":1,
-               "oracle.dictionary.mode": "auto",
-               "enable.large.lob.object.support": "true",
-               "behavior.on.dictionary.mismatch": "log",
-               "behavior.on.unparsable.statement": "log",
-               "Sanitize.field.name": "true"
+               "oracle.dictionary.mode": "auto"
           }' \
      http://localhost:8083/connectors/cdc-oracle-source-cdb/config | jq .
 
