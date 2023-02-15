@@ -77,7 +77,7 @@ services:
       KAFKA_ZOOKEEPER_SET_ACL: "true"
       KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "false"
       KAFKA_LOG4J_LOGGERS: "kafka.authorizer.logger=INFO"
-      KAFKA_SUPER_USERS: User:admin;User:kafka;User:schemaregistry;User:connect;User:controlcenter;User:ksqldb;User:conduktor
+      KAFKA_SUPER_USERS: User:admin;User:kafka;User:schemaregistry;User:connect;User:controlcenter;User:ksqldb;User:conduktor;User:rest
       KAFKA_OPTS: -Djava.security.auth.login.config=/etc/kafka/broker.sasl.jaas.config
                   # -Djdk.security.allowNonCaAnchor=true
                   # -Dsun.security.krb5.disableReferrals=true
@@ -131,7 +131,7 @@ services:
       KAFKA_ZOOKEEPER_SET_ACL: "true"
       KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "false"
       KAFKA_LOG4J_LOGGERS: "kafka.authorizer.logger=INFO"
-      KAFKA_SUPER_USERS: User:admin;User:kafka;User:schemaregistry;User:connect;User:controlcenter;User:ksqldb;User:conduktor
+      KAFKA_SUPER_USERS: User:admin;User:kafka;User:schemaregistry;User:connect;User:controlcenter;User:ksqldb;User:conduktor;User:rest
       KAFKA_OPTS: -Djava.security.auth.login.config=/etc/kafka/broker.sasl.jaas.config
                   # -Djdk.security.allowNonCaAnchor=true
                   # -Dsun.security.krb5.disableReferrals=true
@@ -190,7 +190,7 @@ services:
       KAFKA_ZOOKEEPER_SET_ACL: "true"
       KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "false"
       KAFKA_LOG4J_LOGGERS: "kafka.authorizer.logger=INFO"
-      KAFKA_SUPER_USERS: User:admin;User:kafka;User:schemaregistry;User:connect;User:controlcenter;User:ksqldb;User:conduktor
+      KAFKA_SUPER_USERS: User:admin;User:kafka;User:schemaregistry;User:connect;User:controlcenter;User:ksqldb;User:conduktor;User:rest
       KAFKA_OPTS: -Djava.security.auth.login.config=/etc/kafka/broker.sasl.jaas.config
                   # -Djdk.security.allowNonCaAnchor=true
                   # -Dsun.security.krb5.disableReferrals=true
@@ -347,6 +347,45 @@ services:
 #         at org.apache.kafka.clients.ClientUtils.createChannelBuilder(ClientUtils.java:105)
 #         at org.apache.kafka.clients.consumer.KafkaConsumer.<init>(KafkaConsumer.java:743)
 #         ... 25 common frames omitted
+
+  restproxy:
+    image: confluentinc/cp-kafka-rest:${TAG}
+    restart: always
+    depends_on:
+      - schema-registry
+    hostname: restproxy
+    container_name: restproxy
+    volumes:
+      - secret:/var/lib/secret
+      - ../../environment/kerberos/kdc/krb5.conf:/etc/krb5.conf
+    ports:
+      - 8086:8086
+    environment:
+      KAFKA_REST_HOST_NAME: restproxy
+      KAFKA_REST_BOOTSTRAP_SERVERS: "broker:9092"
+      KAFKA_REST_LISTENERS: http://0.0.0.0:8086
+
+      KAFKA_REST_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+
+      # Credentials and classpath for cub kafka-ready
+      #CUB_CLASSPATH: '/usr/share/java/confluent-security/kafka-rest/*:/usr/share/java/kafka-rest/*:/usr/share/java/cp-base-new/*'
+      
+       # Enable OAuth for REST Proxy's embedded Kafka client that accesses and manages consumer groups and topics
+      KAFKA_REST_CLIENT_SECURITY_PROTOCOL: SASL_PLAINTEXT
+      KAFKA_REST_CLIENT_SASL_MECHANISM: GSSAPI
+      KAFKA_REST_CLIENT_SASL_KERBEROS_SERVICE_NAME: kafka
+      #KAFKA_REST_CLIENT_SASL_LOGIN_CALLBACK_HANDLER_CLASS: io.confluent.kafka.clients.plugins.auth.token.TokenUserLoginCallbackHandler
+      KAFKA_REST_CLIENT_SASL_JAAS_CONFIG: |
+               com.sun.security.auth.module.Krb5LoginModule required \
+               useKeyTab=true \
+               storeKey=true \
+               keyTab=\"/var/lib/secret/kafka-rest.key\" \
+               principal=\"rest@TEST.CONFLUENT.IO\";
+
+
+      # Enable bearer token authentication which allows the identity of the REST Proxy end user to be propagated to Kafka for authorization
+      #KAFKA_REST_KAFKA_REST_RESOURCE_EXTENSION_CLASS: io.confluent.kafkarest.security.KafkaRestSecurityResourceExtension
+      #KAFKA_REST_REST_SERVLET_INITIALIZOR_CLASSES: io.confluent.common.security.jetty.initializer.InstallBearerOrBasicSecurityHandler
 
 volumes:
   secret: {}

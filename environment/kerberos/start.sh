@@ -112,6 +112,8 @@ docker exec -i kdc kadmin.local -w password -q "add_principal -randkey controlce
 docker exec -i kdc kadmin.local -w password -q "modprinc -maxlife 11days -maxrenewlife 11days +allow_renewable controlcenter@TEST.CONFLUENT.IO"  > /dev/null
 docker exec -i kdc kadmin.local -w password -q "add_principal -randkey conduktor@TEST.CONFLUENT.IO"  > /dev/null
 docker exec -i kdc kadmin.local -w password -q "modprinc -maxlife 11days -maxrenewlife 11days +allow_renewable conduktor@TEST.CONFLUENT.IO"  > /dev/null
+docker exec -i kdc kadmin.local -w password -q "add_principal -randkey rest@TEST.CONFLUENT.IO"  > /dev/null
+docker exec -i kdc kadmin.local -w password -q "modprinc -maxlife 11days -maxrenewlife 11days +allow_renewable rest@TEST.CONFLUENT.IO"  > /dev/null
 
 # Create an admin principal for the cluster, which we'll use to setup ACLs.
 # Look after this - its also declared a super user in broker config.
@@ -132,6 +134,7 @@ docker exec -i kdc rm -f /var/lib/secret/kafka-schemaregistry.key 2>&1 > /dev/nu
 docker exec -i kdc rm -f /var/lib/secret/kafka-ksqldb.key 2>&1 > /dev/null
 docker exec -i kdc rm -f /var/lib/secret/kafka-controlcenter.key 2>&1 > /dev/null
 docker exec -i kdc rm -f /var/lib/secret/kafka-conduktor.key 2>&1 > /dev/null
+docker exec -i kdc rm -f /var/lib/secret/kafka-rest.key 2>&1 > /dev/null
 
 docker exec -i kdc kadmin.local -w password -q "ktadd  -k /var/lib/secret/broker.key -norandkey kafka/broker.kerberos-demo.local@TEST.CONFLUENT.IO " > /dev/null
 docker exec -i kdc kadmin.local -w password -q "ktadd  -k /var/lib/secret/broker2.key -norandkey kafka/broker2.kerberos-demo.local@TEST.CONFLUENT.IO " > /dev/null
@@ -147,6 +150,7 @@ docker exec -i kdc kadmin.local -w password -q "ktadd  -k /var/lib/secret/kafka-
 docker exec -i kdc kadmin.local -w password -q "ktadd  -k /var/lib/secret/kafka-ksqldb.key -norandkey ksqldb@TEST.CONFLUENT.IO " > /dev/null
 docker exec -i kdc kadmin.local -w password -q "ktadd  -k /var/lib/secret/kafka-controlcenter.key -norandkey controlcenter@TEST.CONFLUENT.IO " > /dev/null
 docker exec -i kdc kadmin.local -w password -q "ktadd  -k /var/lib/secret/kafka-conduktor.key -norandkey conduktor@TEST.CONFLUENT.IO " > /dev/null
+docker exec -i kdc kadmin.local -w password -q "ktadd  -k /var/lib/secret/kafka-rest.key -norandkey rest@TEST.CONFLUENT.IO " > /dev/null
 
 if [[ "$TAG" == *ubi8 ]] || version_gt $TAG_BASE "5.9.0"
 then
@@ -166,6 +170,7 @@ then
   docker exec -i kdc chmod a+r /var/lib/secret/kafka-ksqldb.key
   docker exec -i kdc chmod a+r /var/lib/secret/kafka-controlcenter.key
   docker exec -i kdc chmod a+r /var/lib/secret/kafka-conduktor.key
+  docker exec -i kdc chmod a+r /var/lib/secret/kafka-rest.key
 fi
 
 # Starting zookeeper and kafka now that the keytab has been created with the required credentials and services
@@ -191,6 +196,11 @@ docker exec client bash -c "kinit -k -t /var/lib/secret/kafka-admin.key admin/fo
 # Adding ACLs for connect user:
 docker exec client bash -c "kinit -k -t /var/lib/secret/kafka-admin.key admin/for-kafka && kafka-acls --bootstrap-server broker:9092 --command-config /etc/kafka/command.properties --add --allow-principal User:connect --consumer --topic=* --group=*"
 docker exec client bash -c "kinit -k -t /var/lib/secret/kafka-admin.key admin/for-kafka && kafka-acls --bootstrap-server broker:9092 --command-config /etc/kafka/command.properties --add --allow-principal User:connect --producer --topic=*"
+
+# Adding ACLs for rest user:
+docker exec client bash -c "kinit -k -t /var/lib/secret/kafka-admin.key admin/for-kafka && kafka-acls --bootstrap-server broker:9092 --command-config /etc/kafka/command.properties --add --allow-principal User:rest --consumer --topic=* --group=*"
+docker exec client bash -c "kinit -k -t /var/lib/secret/kafka-admin.key admin/for-kafka && kafka-acls --bootstrap-server broker:9092 --command-config /etc/kafka/command.properties --add --allow-principal User:rest --producer --topic=*"
+
 # schemaregistry and controlcenter is super user
 
 # Output example usage:
